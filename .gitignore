@@ -6,3 +6,7 @@
 # Build directory.
 build/
 out/
+
+# Ide
+.idea
+cmake-build-debug

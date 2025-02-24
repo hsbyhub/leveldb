@@ -1198,17 +1198,17 @@ Status DBImpl::Delete(const WriteOptions& options, const Slice& key) {
 }
 
 Status DBImpl::Write(const WriteOptions& options, WriteBatch* updates) {
-  Writer w(&mutex_);
+  Writer w(&mutex_);      //XSX// 创建Writer，相当于updates的上下文，当done==true时，说明updates已经完成
   w.batch = updates;
   w.sync = options.sync;
   w.done = false;
 
-  MutexLock l(&mutex_);
+  MutexLock l(&mutex_);   //XSX// 将多线程的write请求序列化，由插到write列表头部的线程实际执行
   writers_.push_back(&w);
   while (!w.done && &w != writers_.front()) {
     w.cv.Wait();
   }
-  if (w.done) {
+  if (w.done) {           //XSX// 头部线程 w.done==false 继续往下执行, 非头部线程会因为write被执行而在这里直接return
     return w.status;
   }
 
@@ -1217,8 +1217,8 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* updates) {
   uint64_t last_sequence = versions_->LastSequence();
   Writer* last_writer = &w;
   if (status.ok() && updates != nullptr) {  // nullptr batch is for compactions
-    WriteBatch* write_batch = BuildBatchGroup(&last_writer);
-    WriteBatchInternal::SetSequence(write_batch, last_sequence + 1);
+    WriteBatch* write_batch = BuildBatchGroup(&last_writer);              //XSX// 收集entries到单个WriteBatch
+    WriteBatchInternal::SetSequence(write_batch, last_sequence + 1);      //XSX// 设置序列号
     last_sequence += WriteBatchInternal::Count(write_batch);
 
     // Add to log and apply to memtable.  We can release the lock
@@ -1272,7 +1272,7 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* updates) {
 
 // REQUIRES: Writer list must be non-empty
 // REQUIRES: First writer must have a non-null batch
-WriteBatch* DBImpl::BuildBatchGroup(Writer** last_writer) {
+WriteBatch* DBImpl::BuildBatchGroup(Writer** last_writer) {     //XSX// 收集一组写请求，返回合并的batch和最后一个write
   mutex_.AssertHeld();
   assert(!writers_.empty());
   Writer* first = writers_.front();

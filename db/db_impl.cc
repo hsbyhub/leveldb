@@ -179,7 +179,7 @@ DBImpl::~DBImpl() {
 }
 
 Status DBImpl::NewDB() {
-  VersionEdit new_db;
+  VersionEdit new_db;                                           //XSX// 向MANIFEST文件写入新建new_db记录
   new_db.SetComparatorName(user_comparator()->Name());
   new_db.SetLogNumber(0);
   new_db.SetNextFile(2);

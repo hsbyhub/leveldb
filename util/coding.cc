@@ -52,7 +52,7 @@ void PutVarint32(std::string* dst, uint32_t v) {
   dst->append(buf, ptr - buf);
 }
 
-char* EncodeVarint64(char* dst, uint64_t v) {
+char* EncodeVarint64(char* dst, uint64_t v) {       //xsx// 变长整数编码
   static const int B = 128;
   uint8_t* ptr = reinterpret_cast<uint8_t*>(dst);
   while (v >= B) {
@@ -74,7 +74,7 @@ void PutLengthPrefixedSlice(std::string* dst, const Slice& value) {
   dst->append(value.data(), value.size());
 }
 
-int VarintLength(uint64_t v) {
+int VarintLength(uint64_t v) {                      //xsx// 计算v的【变长整数编码】需要的字节数
   int len = 1;
   while (v >= 128) {
     v >>= 7;

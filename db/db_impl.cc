@@ -179,7 +179,7 @@ DBImpl::~DBImpl() {
 }
 
 Status DBImpl::NewDB() {
-  VersionEdit new_db;                                           //XSX// 向MANIFEST文件写入新建new_db记录
+  VersionEdit new_db;                                           //xsx// 向MANIFEST文件写入新建new_db记录
   new_db.SetComparatorName(user_comparator()->Name());
   new_db.SetLogNumber(0);
   new_db.SetNextFile(2);
@@ -1198,27 +1198,27 @@ Status DBImpl::Delete(const WriteOptions& options, const Slice& key) {
 }
 
 Status DBImpl::Write(const WriteOptions& options, WriteBatch* updates) {
-  Writer w(&mutex_);      //XSX// 创建Writer，相当于updates的上下文，当done==true时，说明updates已经完成
+  Writer w(&mutex_);      //xsx// 创建Writer，相当于updates的上下文，当done==true时，说明updates已经完成
   w.batch = updates;
   w.sync = options.sync;
   w.done = false;
 
-  MutexLock l(&mutex_);   //XSX// 将多线程的write请求序列化，由插到write列表头部的线程实际执行
+  MutexLock l(&mutex_);   //xsx// 将多线程的write请求序列化，由插到write列表头部的线程实际执行
   writers_.push_back(&w);
   while (!w.done && &w != writers_.front()) {
     w.cv.Wait();
   }
-  if (w.done) {           //XSX// 头部线程 w.done==false 继续往下执行, 非头部线程会因为write被执行而在这里直接return
+  if (w.done) {           //xsx// 头部线程 w.done==false 继续往下执行, 非头部线程会因为write被执行而在这里直接return
     return w.status;
   }
 
   // May temporarily unlock and wait.
-  Status status = MakeRoomForWrite(updates == nullptr);                   //XSX// 创建空间 & 触发合并
+  Status status = MakeRoomForWrite(updates == nullptr);                   //xsx// 创建空间 & 触发合并
   uint64_t last_sequence = versions_->LastSequence();
   Writer* last_writer = &w;
   if (status.ok() && updates != nullptr) {  // nullptr batch is for compactions
-    WriteBatch* write_batch = BuildBatchGroup(&last_writer);              //XSX// 收集entries到单个WriteBatch
-    WriteBatchInternal::SetSequence(write_batch, last_sequence + 1);      //XSX// 设置序列号
+    WriteBatch* write_batch = BuildBatchGroup(&last_writer);              //xsx// 收集entries到单个WriteBatch
+    WriteBatchInternal::SetSequence(write_batch, last_sequence + 1);      //xsx// 设置序列号
     last_sequence += WriteBatchInternal::Count(write_batch);
 
     // Add to log and apply to memtable.  We can release the lock
@@ -1272,7 +1272,7 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* updates) {
 
 // REQUIRES: Writer list must be non-empty
 // REQUIRES: First writer must have a non-null batch
-WriteBatch* DBImpl::BuildBatchGroup(Writer** last_writer) {     //XSX// 收集一组写请求，返回合并的batch和最后一个write
+WriteBatch* DBImpl::BuildBatchGroup(Writer** last_writer) {     //xsx// 收集一组写请求，返回合并的batch和最后一个write
   mutex_.AssertHeld();
   assert(!writers_.empty());
   Writer* first = writers_.front();
@@ -1345,13 +1345,13 @@ Status DBImpl::MakeRoomForWrite(bool force) {
       allow_delay = false;  // Do not delay a single write more than once
       mutex_.Lock();
     } else if (!force &&
-               (mem_->ApproximateMemoryUsage() <= options_.write_buffer_size)) {      //XSX// 如果内存足够，则不刷出内存
+               (mem_->ApproximateMemoryUsage() <= options_.write_buffer_size)) {      //xsx// 如果内存足够，则不刷出内存
       // There is room in current memtable
       break;
     } else if (imm_ != nullptr) {
       // We have filled up the current memtable, but the previous
       // one is still being compacted, so we wait.
-      Log(options_.info_log, "Current memtable full; waiting...\n");                  //XSX// 上一个memtable正在被转换
+      Log(options_.info_log, "Current memtable full; waiting...\n");                  //xsx// 上一个memtable正在被转换
       background_work_finished_signal_.Wait();
     } else if (versions_->NumLevelFiles(0) >= config::kL0_StopWritesTrigger) {
       // There are too many level-0 files.

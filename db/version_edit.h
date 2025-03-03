@@ -86,10 +86,10 @@ class VersionEdit {
   typedef std::set<std::pair<int, uint64_t>> DeletedFileSet;
 
   std::string comparator_;
-  uint64_t log_number_;
-  uint64_t prev_log_number_;
-  uint64_t next_file_number_;
-  SequenceNumber last_sequence_;
+  uint64_t log_number_;                                         //xsx// 当前日志文件的序列号
+  uint64_t prev_log_number_;                                    //xsx// 上一个日志文件的序列号
+  uint64_t next_file_number_;                                   //xsx// 下一个MANIFEST文件的序列号
+  SequenceNumber last_sequence_;                                //xsx// 当前版本的最后一个日志序列号
   bool has_comparator_;
   bool has_log_number_;
   bool has_prev_log_number_;

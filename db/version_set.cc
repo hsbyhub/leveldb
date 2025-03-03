@@ -470,7 +470,7 @@ bool Version::OverlapInLevel(int level, const Slice* smallest_user_key,
 int Version::PickLevelForMemTableOutput(const Slice& smallest_user_key,
                                         const Slice& largest_user_key) {
   int level = 0;
-  if (!OverlapInLevel(0, &smallest_user_key, &largest_user_key)) {
+  if (!OverlapInLevel(0, &smallest_user_key, &largest_user_key)) {                // 在0层没有覆盖到的文件才有可能下沉
     // Push to next level if there is no overlap in next level,
     // and the #bytes overlapping in the level after that are limited.
     InternalKey start(smallest_user_key, kMaxSequenceNumber, kValueTypeForSeek);
@@ -484,7 +484,7 @@ int Version::PickLevelForMemTableOutput(const Slice& smallest_user_key,
         // Check that file does not overlap too many grandparent bytes.
         GetOverlappingInputs(level + 2, &start, &limit, &overlaps);
         const int64_t sum = TotalFileSize(overlaps);
-        if (sum > MaxGrandParentOverlapBytes(vset_->options_)) {
+        if (sum > MaxGrandParentOverlapBytes(vset_->options_)) {                  //xsx// 避免在下一层触发合并的时候，需要合并太多数据，阻塞读写操作
           break;
         }
       }
@@ -774,7 +774,7 @@ void VersionSet::AppendVersion(Version* v) {
   v->next_->prev_ = v;
 }
 
-Status VersionSet::LogAndApply(VersionEdit* edit, port::Mutex* mu) {
+Status VersionSet::LogAndApply(VersionEdit* edit, port::Mutex* mu) {            //xsx// 应用版本
   if (edit->has_log_number_) {
     assert(edit->log_number_ >= log_number_);
     assert(edit->log_number_ < next_file_number_);
@@ -810,7 +810,7 @@ Status VersionSet::LogAndApply(VersionEdit* edit, port::Mutex* mu) {
     s = env_->NewWritableFile(new_manifest_file, &descriptor_file_);
     if (s.ok()) {
       descriptor_log_ = new log::Writer(descriptor_file_);
-      s = WriteSnapshot(descriptor_log_);
+      s = WriteSnapshot(descriptor_log_);                                       //xsx// 向新的MANIFEST文件写入db基础视图
     }
   }
 
@@ -834,7 +834,7 @@ Status VersionSet::LogAndApply(VersionEdit* edit, port::Mutex* mu) {
     // If we just created a new descriptor file, install it by writing a
     // new CURRENT file that points to it.
     if (s.ok() && !new_manifest_file.empty()) {
-      s = SetCurrentFile(env_, dbname_, manifest_file_number_);
+      s = SetCurrentFile(env_, dbname_, manifest_file_number_);                 //xsx// 将CURRENT指向新的MANIFEST文件
     }
 
     mu->Lock();

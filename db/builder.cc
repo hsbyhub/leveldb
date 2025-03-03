@@ -14,7 +14,7 @@
 
 namespace leveldb {
 
-Status BuildTable(const std::string& dbname, Env* env, const Options& options,
+Status BuildTable(const std::string& dbname, Env* env, const Options& options,    //xsx// 创建SSTable文件, 遍历iter(memtable迭代器)所有数据并写入
                   TableCache* table_cache, Iterator* iter, FileMetaData* meta) {
   Status s;
   meta->file_size = 0;
@@ -28,7 +28,7 @@ Status BuildTable(const std::string& dbname, Env* env, const Options& options,
       return s;
     }
 
-    TableBuilder* builder = new TableBuilder(options, file);
+    TableBuilder* builder = new TableBuilder(options, file);                      //xsx// 负责构建SSTable文件
     meta->smallest.DecodeFrom(iter->key());
     Slice key;
     for (; iter->Valid(); iter->Next()) {

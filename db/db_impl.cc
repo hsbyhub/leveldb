@@ -563,9 +563,9 @@ void DBImpl::CompactMemTable() {
 
   // Replace immutable memtable with the generated Table
   if (s.ok()) {
-    edit.SetPrevLogNumber(0);
+    edit.SetPrevLogNumber(0);                                                     //xsx// 旧的log文件已经没用，因为其对应的memtable已经被持久化为sstable(稳定状态)
     edit.SetLogNumber(logfile_number_);  // Earlier logs no longer needed
-    s = versions_->LogAndApply(&edit, &mutex_);
+    s = versions_->LogAndApply(&edit, &mutex_);                                   //xsx// 提交生成的SSTable到版本库
   }
 
   if (s.ok()) {
@@ -1345,7 +1345,7 @@ Status DBImpl::MakeRoomForWrite(bool force) {
       allow_delay = false;  // Do not delay a single write more than once
       mutex_.Lock();
     } else if (!force &&
-               (mem_->ApproximateMemoryUsage() <= options_.write_buffer_size)) {      //xsx// 如果内存足够，则不刷出内存
+               (mem_->ApproximateMemoryUsage() <= options_.write_buffer_size)) {      //xsx// 如果内存(4MB)足够，则不刷出内存
       // There is room in current memtable
       break;
     } else if (imm_ != nullptr) {

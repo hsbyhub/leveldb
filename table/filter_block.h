@@ -42,11 +42,11 @@ class FilterBlockBuilder {
   void GenerateFilter();
 
   const FilterPolicy* policy_;
-  std::string keys_;             // Flattened key contents
-  std::vector<size_t> start_;    // Starting index in keys_ of each key
-  std::string result_;           // Filter data computed so far
+  std::string keys_;             // Flattened key contents                      //xsx// 以我的理解，拼接所有key是为了减少申请内存的次数以及减少内存碎片
+  std::vector<size_t> start_;    // Starting index in keys_ of each key         //xsx// 所有key的index of begin
+  std::string result_;           // Filter data computed so far                 //xsx// 展平的所有过滤器
   std::vector<Slice> tmp_keys_;  // policy_->CreateFilter() argument
-  std::vector<uint32_t> filter_offsets_;
+  std::vector<uint32_t> filter_offsets_;                                        //xsx// 每个过滤器在result_中的起始偏移值
 };
 
 class FilterBlockReader {

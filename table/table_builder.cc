@@ -35,17 +35,17 @@ struct TableBuilder::Rep {
     index_block_options.block_restart_interval = 1;
   }
 
-  Options options;
-  Options index_block_options;
-  WritableFile* file;
-  uint64_t offset;
-  Status status;
-  BlockBuilder data_block;
-  BlockBuilder index_block;
-  std::string last_key;
-  int64_t num_entries;
+  Options options;                  //xsx// 配置信息
+  Options index_block_options;      //xsx// 配置信息，构造时copy来自options，但block_restart_interval重置为1，保证索引块中的条目精确匹配
+  WritableFile* file;               //xsx// 写文件接口实例
+  uint64_t offset;                  //xsx// 当前写文件的偏移量
+  Status status;                    //xsx// 当前的构造任务状态
+  BlockBuilder data_block;          //xsx// 数据块构造器
+  BlockBuilder index_block;         //xsx// 索引块构造器
+  std::string last_key;             //xsx// 当前写入的最后一个key，用于Add()时校验文件数据有序性
+  int64_t num_entries;              //xsx// 当前写入的数据个数
   bool closed;  // Either Finish() or Abandon() has been called.
-  FilterBlockBuilder* filter_block;
+  FilterBlockBuilder* filter_block; //xsx// 布隆过滤器构造器
 
   // We do not emit the index entry for a block until we have seen the
   // first key for the next data block.  This allows us to use shorter
@@ -56,10 +56,10 @@ struct TableBuilder::Rep {
   // blocks.
   //
   // Invariant: r->pending_index_entry is true only if data_block is empty.
-  bool pending_index_entry;
+  bool pending_index_entry;         //xsx// 标识当前数据块为空，需要写入上一个数据块的索引
   BlockHandle pending_handle;  // Handle to add to index block
 
-  std::string compressed_output;
+  std::string compressed_output;    //xsx// 压缩数据时的临时输出buffer
 };
 
 TableBuilder::TableBuilder(const Options& options, WritableFile* file)
@@ -96,12 +96,12 @@ void TableBuilder::Add(const Slice& key, const Slice& value) {
   assert(!r->closed);
   if (!ok()) return;
   if (r->num_entries > 0) {
-    assert(r->options.comparator->Compare(key, Slice(r->last_key)) > 0);
+    assert(r->options.comparator->Compare(key, Slice(r->last_key)) > 0);        //xsx// 保证所有所有entry有序
   }
 
-  if (r->pending_index_entry) {
+  if (r->pending_index_entry) {                                                 //xsx// 如果为true，说明data_block刚刚被刷出，需要创建index_block
     assert(r->data_block.empty());
-    r->options.comparator->FindShortestSeparator(&r->last_key, key);
+    r->options.comparator->FindShortestSeparator(&r->last_key, key);            //xsx//**// 找出小于间于last_key和curr_key的最短key作为索引key，提高二分查找索引时的效率
     std::string handle_encoding;
     r->pending_handle.EncodeTo(&handle_encoding);
     r->index_block.Add(r->last_key, Slice(handle_encoding));
@@ -109,20 +109,20 @@ void TableBuilder::Add(const Slice& key, const Slice& value) {
   }
 
   if (r->filter_block != nullptr) {
-    r->filter_block->AddKey(key);
+    r->filter_block->AddKey(key);                                               //xsx// 添加key到布隆过滤器
   }
 
   r->last_key.assign(key.data(), key.size());
   r->num_entries++;
-  r->data_block.Add(key, value);
+  r->data_block.Add(key, value);                                                //xsx// 添加数据到数据块
 
   const size_t estimated_block_size = r->data_block.CurrentSizeEstimate();
-  if (estimated_block_size >= r->options.block_size) {
+  if (estimated_block_size >= r->options.block_size) {                          //xsx// 判断数据块是否超过限制(默认4k)，超过则刷出数据到文件
     Flush();
   }
 }
 
-void TableBuilder::Flush() {
+void TableBuilder::Flush() {                                                    //xsx// 刷出数据块内容到文件
   Rep* r = rep_;
   assert(!r->closed);
   if (!ok()) return;
@@ -138,7 +138,7 @@ void TableBuilder::Flush() {
   }
 }
 
-void TableBuilder::WriteBlock(BlockBuilder* block, BlockHandle* handle) {
+void TableBuilder::WriteBlock(BlockBuilder* block, BlockHandle* handle) {       //xsx// 写入块数据到文件，主要执行压缩，随后调用WriteRawBlock()进行实际文件内容写入
   // File format contains a sequence of blocks where each block has:
   //    block_data: uint8[n]
   //    type: uint8
@@ -170,11 +170,11 @@ void TableBuilder::WriteBlock(BlockBuilder* block, BlockHandle* handle) {
     }
   }
   WriteRawBlock(block_contents, type, handle);
-  r->compressed_output.clear();
+  r->compressed_output.clear();                                                 //xsx// 清理缓存，clear并不会释放内存
   block->Reset();
 }
 
-void TableBuilder::WriteRawBlock(const Slice& block_contents,
+void TableBuilder::WriteRawBlock(const Slice& block_contents,                   //xsx// 实际写入文件，格式<conetnt:n><type:1><crc:4>
                                  CompressionType type, BlockHandle* handle) {
   Rep* r = rep_;
   handle->set_offset(r->offset);

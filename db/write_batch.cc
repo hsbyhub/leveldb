@@ -34,7 +34,7 @@ WriteBatch::Handler::~Handler() = default;
 
 void WriteBatch::Clear() {
   rep_.clear();
-  rep_.resize(kHeader);
+  rep_.resize(kHeader);  //xsx// 预置12byte内存用于保存8位的序列号和4字节条目数
 }
 
 size_t WriteBatch::ApproximateSize() const { return rep_.size(); }
@@ -83,7 +83,7 @@ int WriteBatchInternal::Count(const WriteBatch* b) {
   return DecodeFixed32(b->rep_.data() + 8);
 }
 
-void WriteBatchInternal::SetCount(WriteBatch* b, int n) {
+void WriteBatchInternal::SetCount(WriteBatch* b, int n) {                               //xsx// 编码kv对数，位于rep_[8:12]
   EncodeFixed32(&b->rep_[8], n);
 }
 
@@ -91,7 +91,7 @@ SequenceNumber WriteBatchInternal::Sequence(const WriteBatch* b) {
   return SequenceNumber(DecodeFixed64(b->rep_.data()));
 }
 
-void WriteBatchInternal::SetSequence(WriteBatch* b, SequenceNumber seq) {
+void WriteBatchInternal::SetSequence(WriteBatch* b, SequenceNumber seq) {               //xsx// 编码起始的序列号，位于rep_[0:8]
   EncodeFixed64(&b->rep_[0], seq);
 }
 

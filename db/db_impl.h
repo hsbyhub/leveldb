@@ -28,10 +28,10 @@ class VersionSet;
 
 class DBImpl : public DB {
  public:
-  DBImpl(const Options& options, const std::string& dbname);
+  DBImpl(const Options& options, const std::string& dbname);                    //xsx// 构造方法，传入DB选项(options)和DB名(dbname)
 
-  DBImpl(const DBImpl&) = delete;
-  DBImpl& operator=(const DBImpl&) = delete;
+  DBImpl(const DBImpl&) = delete;                                               //xsx// 禁用拷贝构造
+  DBImpl& operator=(const DBImpl&) = delete;                                    //xsx// 禁用赋值运算符
 
   ~DBImpl() override;
 
@@ -183,7 +183,7 @@ class DBImpl : public DB {
   uint32_t seed_ GUARDED_BY(mutex_);  // For sampling.
 
   // Queue of writers.
-  std::deque<Writer*> writers_ GUARDED_BY(mutex_);
+  std::deque<Writer*> writers_ GUARDED_BY(mutex_);                              //xsx// 写任务队列, 插入队列头部的线程获得执行权，其它线程等待自己的任务被执行结束后直接返回
   WriteBatch* tmp_batch_ GUARDED_BY(mutex_);
 
   SnapshotList snapshots_ GUARDED_BY(mutex_);

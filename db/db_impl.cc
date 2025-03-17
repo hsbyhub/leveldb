@@ -1213,12 +1213,12 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* updates) {
   }
 
   // May temporarily unlock and wait.
-  Status status = MakeRoomForWrite(updates == nullptr);                   //xsx// 创建空间 & 触发合并
+  Status status = MakeRoomForWrite(updates == nullptr);                         //xsx// 创建空间 & 触发合并
   uint64_t last_sequence = versions_->LastSequence();
   Writer* last_writer = &w;
   if (status.ok() && updates != nullptr) {  // nullptr batch is for compactions
-    WriteBatch* write_batch = BuildBatchGroup(&last_writer);              //xsx// 收集entries到单个WriteBatch
-    WriteBatchInternal::SetSequence(write_batch, last_sequence + 1);      //xsx// 设置序列号
+    WriteBatch* write_batch = BuildBatchGroup(&last_writer);                    //xsx// 收集entries到单个WriteBatch
+    WriteBatchInternal::SetSequence(write_batch, last_sequence + 1);            //xsx// 设置序列号
     last_sequence += WriteBatchInternal::Count(write_batch);
 
     // Add to log and apply to memtable.  We can release the lock
@@ -1227,7 +1227,7 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* updates) {
     // into mem_.
     {
       mutex_.Unlock();
-      status = log_->AddRecord(WriteBatchInternal::Contents(write_batch));
+      status = log_->AddRecord(WriteBatchInternal::Contents(write_batch));      //xsx// 将数据同步写入磁盘WAL-log文件
       bool sync_error = false;
       if (status.ok() && options.sync) {
         status = logfile_->Sync();
@@ -1236,7 +1236,7 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* updates) {
         }
       }
       if (status.ok()) {
-        status = WriteBatchInternal::InsertInto(write_batch, mem_);
+        status = WriteBatchInternal::InsertInto(write_batch, mem_);             //xsx// 将数据写入内存MemTable
       }
       mutex_.Lock();
       if (sync_error) {

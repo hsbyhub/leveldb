@@ -83,7 +83,7 @@ int WriteBatchInternal::Count(const WriteBatch* b) {
   return DecodeFixed32(b->rep_.data() + 8);
 }
 
-void WriteBatchInternal::SetCount(WriteBatch* b, int n) {                               //xsx// 编码kv对数，位于rep_[8:12]
+void WriteBatchInternal::SetCount(WriteBatch* b, int n) {
   EncodeFixed32(&b->rep_[8], n);
 }
 
@@ -91,7 +91,7 @@ SequenceNumber WriteBatchInternal::Sequence(const WriteBatch* b) {
   return SequenceNumber(DecodeFixed64(b->rep_.data()));
 }
 
-void WriteBatchInternal::SetSequence(WriteBatch* b, SequenceNumber seq) {               //xsx// 编码起始的序列号，位于rep_[0:8]
+void WriteBatchInternal::SetSequence(WriteBatch* b, SequenceNumber seq) {
   EncodeFixed64(&b->rep_[0], seq);
 }
 

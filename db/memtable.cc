@@ -82,20 +82,20 @@ void MemTable::Add(SequenceNumber s, ValueType type, const Slice& key,
   //  value bytes  : char[value.size()]
   size_t key_size = key.size();
   size_t val_size = value.size();
-  size_t internal_key_size = key_size + 8;
+  size_t internal_key_size = key_size + 8;                                      //xsx// 多出来的8byte(64bits)用于储蓄序列号(s:56bits)和类型(type:8bits)
   const size_t encoded_len = VarintLength(internal_key_size) +
                              internal_key_size + VarintLength(val_size) +
                              val_size;
-  char* buf = arena_.Allocate(encoded_len);
-  char* p = EncodeVarint32(buf, internal_key_size);
-  std::memcpy(p, key.data(), key_size);
+  char* buf = arena_.Allocate(encoded_len);                                     //xsx// 申请内存
+  char* p = EncodeVarint32(buf, internal_key_size);                             //xsx// 通过定长整数编码写入key的大小(32bit)
+  std::memcpy(p, key.data(), key_size);                                         //xsx// 通过内存拷贝写入key的内容
   p += key_size;
-  EncodeFixed64(p, (s << 8) | type);
+  EncodeFixed64(p, (s << 8) | type);                                            //xsx// 通过定长整数编码写入 序列号(buf[8:64]) 和 类型(buf[0:8])
   p += 8;
-  p = EncodeVarint32(p, val_size);
-  std::memcpy(p, value.data(), val_size);
+  p = EncodeVarint32(p, val_size);                                              //xsx// 通过定长整数编码写入value的大小(32bit)
+  std::memcpy(p, value.data(), val_size);                                       //xsx// 通过内存拷贝写入key的内容
   assert(p + val_size == buf + encoded_len);
-  table_.Insert(buf);
+  table_.Insert(buf);                                                           //xsx// 将组装好的记录插入Table(skiplist)
 }
 
 bool MemTable::Get(const LookupKey& key, std::string* value, Status* s) {

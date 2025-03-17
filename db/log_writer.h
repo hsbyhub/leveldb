@@ -17,7 +17,7 @@ class WritableFile;
 
 namespace log {
 
-class Writer {
+class Writer {                                            //xsx// 负责编码WAL-log文件
  public:
   // Create a writer that will append data to "*dest".
   // "*dest" must be initially empty.

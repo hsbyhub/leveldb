@@ -177,9 +177,9 @@ class DBImpl : public DB {
   MemTable* mem_;
   MemTable* imm_ GUARDED_BY(mutex_);  // Memtable being compacted
   std::atomic<bool> has_imm_;         // So bg thread can detect non-null imm_
-  WritableFile* logfile_;
+  WritableFile* logfile_;                                                       //xsx// WAL-log文件操作模块，属于env层，支持多种平台实现，典型的有PosixWritableFile
   uint64_t logfile_number_ GUARDED_BY(mutex_);
-  log::Writer* log_;
+  log::Writer* log_;                                                            //xsx// WAL-log编码器, 与MemTable的数据同步，持久化在磁盘上，Put数据的时候，只有WAL-log写成功才会继续执行
   uint32_t seed_ GUARDED_BY(mutex_);  // For sampling.
 
   // Queue of writers.

@@ -128,8 +128,8 @@ class SkipList {
   Node* FindLast() const;
 
   // Immutable after construction
-  Comparator const compare_;
-  Arena* const arena_;  // Arena used for allocations of nodes
+  Comparator const compare_;                                                    //xsx// 对比器，用于对比key
+  Arena* const arena_;  // Arena used for allocations of nodes                  //xsx// 用于申请节点的内存
 
   Node* const head_;
 
@@ -182,7 +182,7 @@ template <typename Key, class Comparator>
 typename SkipList<Key, Comparator>::Node* SkipList<Key, Comparator>::NewNode(
     const Key& key, int height) {
   char* const node_memory = arena_->AllocateAligned(
-      sizeof(Node) + sizeof(std::atomic<Node*>) * (height - 1));
+      sizeof(Node) + sizeof(std::atomic<Node*>) * (height - 1));                // 使用了柔性数组，在分配内存时，多余的内存作为next_的空间，即sizeof(next_)=height
   return new (node_memory) Node(key);
 }
 
@@ -265,12 +265,12 @@ SkipList<Key, Comparator>::FindGreaterOrEqual(const Key& key,
   int level = GetMaxHeight() - 1;
   while (true) {
     Node* next = x->Next(level);
-    if (KeyIsAfterNode(key, next)) {
+    if (KeyIsAfterNode(key, next)) {                                            //xsx// 判断如果比右边的节点大则向右跳跃，否则下沉
       // Keep searching in this list
-      x = next;
+      x = next;                                                                 //xsx// 向右跳跃
     } else {
-      if (prev != nullptr) prev[level] = x;
-      if (level == 0) {
+      if (prev != nullptr) prev[level] = x;                                     //xsx// 下沉时记录插入位置的前一个节点
+      if (level == 0) {                                                         //xsx// 下沉到了最低层，返回下一个节点
         return next;
       } else {
         // Switch to next list

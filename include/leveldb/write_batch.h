@@ -35,8 +35,8 @@ class LEVELDB_EXPORT WriteBatch {
   class LEVELDB_EXPORT Handler {
    public:
     virtual ~Handler();
-    virtual void Put(const Slice& key, const Slice& value) = 0;
-    virtual void Delete(const Slice& key) = 0;
+    virtual void Put(const Slice& key, const Slice& value) = 0;                 //xsx// Iterate()方法处理单个记录时的Put回调
+    virtual void Delete(const Slice& key) = 0;                                  //xsx// Iterate()方法处理单个记录时的Delete回调
   };
 
   WriteBatch();

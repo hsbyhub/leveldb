@@ -101,7 +101,7 @@ void MemTable::Add(SequenceNumber s, ValueType type, const Slice& key,
 bool MemTable::Get(const LookupKey& key, std::string* value, Status* s) {
   Slice memkey = key.memtable_key();
   Table::Iterator iter(&table_);
-  iter.Seek(memkey.data());
+  iter.Seek(memkey.data());                                                     //xsx// 在跳表中查找大于等于key的条目
   if (iter.Valid()) {
     // entry format is:
     //    klength  varint32
@@ -114,24 +114,24 @@ bool MemTable::Get(const LookupKey& key, std::string* value, Status* s) {
     // all entries with overly large sequence numbers.
     const char* entry = iter.key();
     uint32_t key_length;
-    const char* key_ptr = GetVarint32Ptr(entry, entry + 5, &key_length);
+    const char* key_ptr = GetVarint32Ptr(entry, entry + 5, &key_length);        //xsx// 解析key_length
     if (comparator_.comparator.user_comparator()->Compare(
-            Slice(key_ptr, key_length - 8), key.user_key()) == 0) {
+            Slice(key_ptr, key_length - 8), key.user_key()) == 0) {             //xsx// 对比找到的key和目标key
       // Correct user key
-      const uint64_t tag = DecodeFixed64(key_ptr + key_length - 8);
-      switch (static_cast<ValueType>(tag & 0xff)) {
-        case kTypeValue: {
+      const uint64_t tag = DecodeFixed64(key_ptr + key_length - 8);             //xsx// 最后8个字节存储的是tag, 即 type(tag[0:1]) + seq(tag[1:8])
+      switch (static_cast<ValueType>(tag & 0xff)) {                             //xsx// tag中首个字节为type
+        case kTypeValue: {                                                      //xsx// 如果是kValueType，说明该key最新的写记录为set，解析该value并返回
           Slice v = GetLengthPrefixedSlice(key_ptr + key_length);
           value->assign(v.data(), v.size());
           return true;
         }
-        case kTypeDeletion:
+        case kTypeDeletion:                                                     //xsx// 如果是kTypeDeletion，说明最新的写记录为delete，返回找不到该key的状态
           *s = Status::NotFound(Slice());
           return true;
       }
     }
   }
-  return false;
+  return false;                                                                 //xsx// 返回memtable未命中
 }
 
 }  // namespace leveldb

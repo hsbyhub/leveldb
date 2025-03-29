@@ -58,7 +58,7 @@ enum ValueType { kTypeDeletion = 0x0, kTypeValue = 0x1 };
 // and the value type is embedded as the low 8 bits in the sequence
 // number in internal keys, we need to use the highest-numbered
 // ValueType, not the lowest).
-static const ValueType kValueTypeForSeek = kTypeValue;
+static const ValueType kValueTypeForSeek = kTypeValue;                          //xsx// 在查找时优先查找value类型的key
 
 typedef uint64_t SequenceNumber;
 

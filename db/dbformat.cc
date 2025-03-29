@@ -114,7 +114,7 @@ bool InternalFilterPolicy::KeyMayMatch(const Slice& key, const Slice& f) const {
   return user_policy_->KeyMayMatch(ExtractUserKey(key), f);
 }
 
-LookupKey::LookupKey(const Slice& user_key, SequenceNumber s) {
+LookupKey::LookupKey(const Slice& user_key, SequenceNumber s) {                 //xsx// 格式化用于Memtable查找的key，格式为：<user_key_length:4><user_key_content: user_key_length><type:1><seq:7>
   size_t usize = user_key.size();
   size_t needed = usize + 13;  // A conservative estimate
   char* dst;

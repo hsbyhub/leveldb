@@ -44,7 +44,7 @@ Status TableCache::FindTable(uint64_t file_number, uint64_t file_size,
   char buf[sizeof(file_number)];
   EncodeFixed64(buf, file_number);
   Slice key(buf, sizeof(buf));
-  *handle = cache_->Lookup(key);
+  *handle = cache_->Lookup(key);                                                //xsx// 在缓存中查找文件
   if (*handle == nullptr) {
     std::string fname = TableFileName(dbname_, file_number);
     RandomAccessFile* file = nullptr;
@@ -75,7 +75,7 @@ Status TableCache::FindTable(uint64_t file_number, uint64_t file_size,
   return s;
 }
 
-Iterator* TableCache::NewIterator(const ReadOptions& options,
+Iterator* TableCache::NewIterator(const ReadOptions& options,                   //xsx// 创建文件数据迭代器
                                   uint64_t file_number, uint64_t file_size,
                                   Table** tableptr) {
   if (tableptr != nullptr) {
@@ -83,7 +83,7 @@ Iterator* TableCache::NewIterator(const ReadOptions& options,
   }
 
   Cache::Handle* handle = nullptr;
-  Status s = FindTable(file_number, file_size, &handle);
+  Status s = FindTable(file_number, file_size, &handle);                        //xsx// 查找文件
   if (!s.ok()) {
     return NewErrorIterator(s);
   }

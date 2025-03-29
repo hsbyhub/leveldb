@@ -291,7 +291,7 @@ Cache::Handle* LRUCache::Insert(const Slice& key, uint32_t hash, void* value,
     // next is read by key() in an assert, so it must be initialized
     e->next = nullptr;
   }
-  while (usage_ > capacity_ && lru_.next != &lru_) {
+  while (usage_ > capacity_ && lru_.next != &lru_) {                            //xsx// 淘汰
     LRUHandle* old = lru_.next;
     assert(old->refs == 1);
     bool erased = FinishErase(table_.Remove(old->key(), old->hash));
@@ -346,7 +346,7 @@ class ShardedLRUCache : public Cache {
     return Hash(s.data(), s.size(), 0);
   }
 
-  static uint32_t Shard(uint32_t hash) { return hash >> (32 - kNumShardBits); }
+  static uint32_t Shard(uint32_t hash) { return hash >> (32 - kNumShardBits); } //xsx// 通过右移屏蔽低low28bit，剩下hight4bit
 
  public:
   explicit ShardedLRUCache(size_t capacity) : last_id_(0) {

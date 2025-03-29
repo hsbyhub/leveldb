@@ -84,7 +84,7 @@ Version::~Version() {
   }
 }
 
-int FindFile(const InternalKeyComparator& icmp,
+int FindFile(const InternalKeyComparator& icmp,                                 //xsx// 利用二分法在有序的文件列表中查找key所在文件的索引,如果查找不到则返回大于files.size()
              const std::vector<FileMetaData*>& files, const Slice& key) {
   uint32_t left = 0;
   uint32_t right = files.size();
@@ -118,7 +118,7 @@ static bool BeforeFile(const Comparator* ucmp, const Slice* user_key,
           ucmp->Compare(*user_key, f->smallest.user_key()) < 0);
 }
 
-bool SomeFileOverlapsRange(const InternalKeyComparator& icmp,
+bool SomeFileOverlapsRange(const InternalKeyComparator& icmp,                   //xsx// 检查是否有重叠该key范围的文件
                            bool disjoint_sorted_files,
                            const std::vector<FileMetaData*>& files,
                            const Slice* smallest_user_key,
@@ -147,7 +147,7 @@ bool SomeFileOverlapsRange(const InternalKeyComparator& icmp,
     index = FindFile(icmp, files, small_key.Encode());
   }
 
-  if (index >= files.size()) {
+  if (index >= files.size()) {                                                  //xsx// 如果返回索引大于等于file.size()，说明key大于所有文件
     // beginning of range is after all files, so no overlap.
     return false;
   }
@@ -207,14 +207,14 @@ class Version::LevelFileNumIterator : public Iterator {
   mutable char value_buf_[16];
 };
 
-static Iterator* GetFileIterator(void* arg, const ReadOptions& options,
+static Iterator* GetFileIterator(void* arg, const ReadOptions& options,         //xsx// 在合并过程中获取文件数据迭代器，其中file_value其实是handle，也就是文件的<number:8><size:8>，使用16个字节进行编码
                                  const Slice& file_value) {
   TableCache* cache = reinterpret_cast<TableCache*>(arg);
   if (file_value.size() != 16) {
     return NewErrorIterator(
         Status::Corruption("FileReader invoked with unexpected value"));
   } else {
-    return cache->NewIterator(options, DecodeFixed64(file_value.data()),
+    return cache->NewIterator(options, DecodeFixed64(file_value.data()),        //xsx// 返回文件数据迭代器，是实际文件内容读取的入口
                               DecodeFixed64(file_value.data() + 8));
   }
 }
@@ -774,7 +774,7 @@ void VersionSet::AppendVersion(Version* v) {
   v->next_->prev_ = v;
 }
 
-Status VersionSet::LogAndApply(VersionEdit* edit, port::Mutex* mu) {            //xsx// 应用版本
+Status VersionSet::LogAndApply(VersionEdit* edit, port::Mutex* mu) {            //xsx// 应用edit记录并写入log文件
   if (edit->has_log_number_) {
     assert(edit->log_number_ >= log_number_);
     assert(edit->log_number_ < next_file_number_);
@@ -810,7 +810,7 @@ Status VersionSet::LogAndApply(VersionEdit* edit, port::Mutex* mu) {            
     s = env_->NewWritableFile(new_manifest_file, &descriptor_file_);
     if (s.ok()) {
       descriptor_log_ = new log::Writer(descriptor_file_);
-      s = WriteSnapshot(descriptor_log_);                                       //xsx// 向新的MANIFEST文件写入db基础视图
+      s = WriteSnapshot(descriptor_log_);                                       //xsx// 向新的MANIFEST文件写入当前db版本视图
     }
   }
 
@@ -1225,7 +1225,7 @@ Iterator* VersionSet::MakeInputIterator(Compaction* c) {
   // Level-0 files have to be merged together.  For other levels,
   // we will make a concatenating iterator per level.
   // TODO(opt): use concatenating iterator for level-0 if there is no overlap
-  const int space = (c->level() == 0 ? c->inputs_[0].size() + 1 : 2);
+  const int space = (c->level() == 0 ? c->inputs_[0].size() + 1 : 2);           //xsx// 对于level=0，需要 input[0].size() + 1 个迭代器，即level0的文件每个文件一个迭代器+下一层一个迭代器(顺序)
   Iterator** list = new Iterator*[space];
   int num = 0;
   for (int which = 0; which < 2; which++) {
@@ -1391,11 +1391,11 @@ void VersionSet::SetupOtherInputs(Compaction* c) {
   GetRange(c->inputs_[0], &smallest, &largest);
 
   current_->GetOverlappingInputs(level + 1, &smallest, &largest,
-                                 &c->inputs_[1]);
+                                 &c->inputs_[1]);                               //xsx// 获取level+1的在level范围内有重叠的文件
 
   // Get entire range covered by compaction
   InternalKey all_start, all_limit;
-  GetRange2(c->inputs_[0], c->inputs_[1], &all_start, &all_limit);
+  GetRange2(c->inputs_[0], c->inputs_[1], &all_start, &all_limit);              //xsx// 获取level、level+1这2层所有文件的范围
 
   // See if we can grow the number of inputs in "level" without
   // changing the number of "level+1" files we pick up.
@@ -1406,7 +1406,7 @@ void VersionSet::SetupOtherInputs(Compaction* c) {
     const int64_t inputs0_size = TotalFileSize(c->inputs_[0]);
     const int64_t inputs1_size = TotalFileSize(c->inputs_[1]);
     const int64_t expanded0_size = TotalFileSize(expanded0);
-    if (expanded0.size() > c->inputs_[0].size() &&
+    if (expanded0.size() > c->inputs_[0].size() &&                              //xsx// 尝试扩展level层，且不增加level+1层的文件数
         inputs1_size + expanded0_size <
             ExpandedCompactionByteSizeLimit(options_)) {
       InternalKey new_start, new_limit;
@@ -1549,7 +1549,7 @@ bool Compaction::ShouldStopBefore(const Slice& internal_key) {
   }
   seen_key_ = true;
 
-  if (overlapped_bytes_ > MaxGrandParentOverlapBytes(vset->options_)) {
+  if (overlapped_bytes_ > MaxGrandParentOverlapBytes(vset->options_)) {         //xsx// 一批output文件最多允许覆盖level+2的10倍文件限制大小的文件，约10*2MB
     // Too much overlap for current output; start new output
     overlapped_bytes_ = 0;
     return true;

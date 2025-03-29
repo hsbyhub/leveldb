@@ -61,7 +61,7 @@ class TwoLevelIterator : public Iterator {
   void* arg_;
   const ReadOptions options_;
   Status status_;
-  IteratorWrapper index_iter_;
+  IteratorWrapper index_iter_;                                                  //xsx// 封装LevelFileNumIterator，其key为文件列表当前遍历文件的最大key
   IteratorWrapper data_iter_;  // May be nullptr
   // If data_iter_ is non-null, then "data_block_handle_" holds the
   // "index_value" passed to block_function_ to create the data_iter_.
@@ -153,7 +153,7 @@ void TwoLevelIterator::InitDataBlock() {
       // data_iter_ is already constructed with this iterator, so
       // no need to change anything
     } else {
-      Iterator* iter = (*block_function_)(arg_, options_, handle);
+      Iterator* iter = (*block_function_)(arg_, options_, handle);              //xsx// 这里获取到文件数据迭代器
       data_block_handle_.assign(handle.data(), handle.size());
       SetDataIterator(iter);
     }

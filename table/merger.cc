@@ -11,7 +11,7 @@
 namespace leveldb {
 
 namespace {
-class MergingIterator : public Iterator {
+class MergingIterator : public Iterator {                                       //xsx// 有序遍历多个文件迭代器列表，基本原理是每次都将current_指向key最小的迭代器(文件迭代器列表)
  public:
   MergingIterator(const Comparator* comparator, Iterator** children, int n)
       : comparator_(comparator),

@@ -145,17 +145,17 @@ class Version {
   void ForEachOverlapping(Slice user_key, Slice internal_key, void* arg,
                           bool (*func)(void*, int, FileMetaData*));
 
-  VersionSet* vset_;  // VersionSet to which this Version belongs
-  Version* next_;     // Next version in linked list
-  Version* prev_;     // Previous version in linked list
-  int refs_;          // Number of live refs to this version
+  VersionSet* vset_;  // VersionSet to which this Version belongs               //xsx// 版本所属的版本集
+  Version* next_;     // Next version in linked list                            //xsx// 版本链的下一个节点
+  Version* prev_;     // Previous version in linked list                        //xsx// 版本链的上一个节点
+  int refs_;          // Number of live refs to this version                    //xsx// 引用数
 
   // List of files per level
-  std::vector<FileMetaData*> files_[config::kNumLevels];
+  std::vector<FileMetaData*> files_[config::kNumLevels];                        //xsx// 版本描述的层级文件，这是版本的核心数据
 
   // Next file to compact based on seek stats.
-  FileMetaData* file_to_compact_;
-  int file_to_compact_level_;
+  FileMetaData* file_to_compact_;                                               //xsx// "seek_compaction"的文件
+  int file_to_compact_level_;                                                   //xsx// "seek_compaction"的层级
 
   // Level that should be compacted next and its compaction score.
   // Score < 1 means compaction is not strictly needed.  These fields
@@ -296,7 +296,7 @@ class VersionSet {
   Env* const env_;
   const std::string dbname_;
   const Options* const options_;
-  TableCache* const table_cache_;
+  TableCache* const table_cache_;                                               //xsx// 管理SSTable文件缓存，leveldb通过TableCache来间接读取SSTable文件
   const InternalKeyComparator icmp_;
   uint64_t next_file_number_;
   uint64_t manifest_file_number_;
@@ -307,12 +307,12 @@ class VersionSet {
   // Opened lazily
   WritableFile* descriptor_file_;
   log::Writer* descriptor_log_;
-  Version dummy_versions_;  // Head of circular doubly-linked list of versions.
-  Version* current_;        // == dummy_versions_.prev_
+  Version dummy_versions_;  // Head of circular doubly-linked list of versions. //xsx// 双向链表头
+  Version* current_;        // == dummy_versions_.prev_                         //xsx// 当前版本，也是双向链表的尾节点
 
   // Per-level key at which the next compaction at that level should start.
   // Either an empty string, or a valid InternalKey.
-  std::string compact_pointer_[config::kNumLevels];
+  std::string compact_pointer_[config::kNumLevels];                             //xsx// 每一层的合并起点，在进行size_compaction时，将获取第一个覆盖该key的文件作为合并起点
 };
 
 // A Compaction encapsulates information about a compaction.
@@ -363,17 +363,17 @@ class Compaction {
 
   Compaction(const Options* options, int level);
 
-  int level_;
-  uint64_t max_output_file_size_;
-  Version* input_version_;
-  VersionEdit edit_;
+  int level_;                                                                   //xsx// 要合并的层级
+  uint64_t max_output_file_size_;                                               //xsx// 输出文件的最大大小
+  Version* input_version_;                                                      //xsx// 基础版本
+  VersionEdit edit_;                                                            //xsx// 版本编辑记录
 
   // Each compaction reads inputs from "level_" and "level_+1"
-  std::vector<FileMetaData*> inputs_[2];  // The two sets of inputs
+  std::vector<FileMetaData*> inputs_[2];  // The two sets of inputs             //xsx// 准备合并的 level 和 level+1 这2层的文件
 
   // State used to check for number of overlapping grandparent files
   // (parent == level_ + 1, grandparent == level_ + 2)
-  std::vector<FileMetaData*> grandparents_;
+  std::vector<FileMetaData*> grandparents_;                                     //xsx// 合并范围(range of input files)包含的level+2层的文件
   size_t grandparent_index_;  // Index in grandparent_starts_
   bool seen_key_;             // Some output key has been seen
   int64_t overlapped_bytes_;  // Bytes of overlap between current output

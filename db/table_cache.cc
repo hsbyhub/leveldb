@@ -49,7 +49,7 @@ Status TableCache::FindTable(uint64_t file_number, uint64_t file_size,
     std::string fname = TableFileName(dbname_, file_number);
     RandomAccessFile* file = nullptr;
     Table* table = nullptr;
-    s = env_->NewRandomAccessFile(fname, &file);
+    s = env_->NewRandomAccessFile(fname, &file);                                //xsx//**// 创建文件读取器(利用mmap)
     if (!s.ok()) {
       std::string old_fname = SSTTableFileName(dbname_, file_number);
       if (env_->NewRandomAccessFile(old_fname, &file).ok()) {

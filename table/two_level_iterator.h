@@ -20,7 +20,7 @@ struct ReadOptions;
 //
 // Uses a supplied function to convert an index_iter value into
 // an iterator over the contents of the corresponding block.
-Iterator* NewTwoLevelIterator(
+Iterator* NewTwoLevelIterator(                                                  //xsx// 用于连接多个子迭代器, 其中block_function用于回调获取子迭代器，例如在合并时用于连接多个待合并的子文件，其中index_iter_为文件句柄迭代器，其句柄在调用block_fucntion作为参数，返回文件(Table)的迭代器
     Iterator* index_iter,
     Iterator* (*block_function)(void* arg, const ReadOptions& options,
                                 const Slice& index_value),

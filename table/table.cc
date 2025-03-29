@@ -42,7 +42,7 @@ Status Table::Open(const Options& options, RandomAccessFile* file,
     return Status::Corruption("file is too short to be an sstable");
   }
 
-  char footer_space[Footer::kEncodedLength];
+  char footer_space[Footer::kEncodedLength];                                    //xsx// 开始解析文件footer
   Slice footer_input;
   Status s = file->Read(size - Footer::kEncodedLength, Footer::kEncodedLength,
                         &footer_input, footer_space);
@@ -53,7 +53,7 @@ Status Table::Open(const Options& options, RandomAccessFile* file,
   if (!s.ok()) return s;
 
   // Read the index block
-  BlockContents index_block_contents;
+  BlockContents index_block_contents;                                           //xsx// 读取索引块
   ReadOptions opt;
   if (options.paranoid_checks) {
     opt.verify_checksums = true;
@@ -73,7 +73,7 @@ Status Table::Open(const Options& options, RandomAccessFile* file,
     rep->filter_data = nullptr;
     rep->filter = nullptr;
     *table = new Table(rep);
-    (*table)->ReadMeta(footer);
+    (*table)->ReadMeta(footer);                                                 //xsx//**// 读取布隆过滤器
   }
 
   return s;

@@ -76,7 +76,7 @@ struct DBImpl::CompactionState {
   // we can drop all entries for the same key with sequence numbers < S.
   SequenceNumber smallest_snapshot;
 
-  std::vector<Output> outputs;
+  std::vector<Output> outputs;                                                  //xsx// 输出文件的元信息列表
 
   // State kept for output being generated
   WritableFile* outfile;
@@ -803,7 +803,7 @@ Status DBImpl::OpenCompactionOutputFile(CompactionState* compact) {
   uint64_t file_number;
   {
     mutex_.Lock();
-    file_number = versions_->NewFileNumber();
+    file_number = versions_->NewFileNumber();                                   //xsx// 申请新的file_number
     pending_outputs_.insert(file_number);
     CompactionState::Output out;
     out.number = file_number;
@@ -817,7 +817,7 @@ Status DBImpl::OpenCompactionOutputFile(CompactionState* compact) {
   std::string fname = TableFileName(dbname_, file_number);
   Status s = env_->NewWritableFile(fname, &compact->outfile);
   if (s.ok()) {
-    compact->builder = new TableBuilder(options_, compact->outfile);
+    compact->builder = new TableBuilder(options_, compact->outfile);            //xsx// 创建新文件的TableBuilder
   }
   return s;
 }
@@ -910,7 +910,7 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
   Iterator* input = versions_->MakeInputIterator(compact->compaction);
 
   // Release mutex while we're actually doing the compaction work
-  mutex_.Unlock();
+  mutex_.Unlock();                                                              //xsx// 当定好合并时的状态并开始实际合并操作时，可以释放锁，允许其它线程进行读写
 
   input->SeekToFirst();
   Status status;
@@ -929,11 +929,11 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
         background_work_finished_signal_.SignalAll();
       }
       mutex_.Unlock();
-      imm_micros += (env_->NowMicros() - imm_start);
+      imm_micros += (env_->NowMicros() - imm_start);                            //xsx// 记录进行imm合并时的时间，在最后统计时间时，将除去这部分开销
     }
 
     Slice key = input->key();
-    if (compact->compaction->ShouldStopBefore(key) &&
+    if (compact->compaction->ShouldStopBefore(key) &&                           //xsx// 判断当前输出文件是否覆盖过多的level+2层的文件，如果是，则截断当前文件输出
         compact->builder != nullptr) {
       status = FinishCompactionOutputFile(compact, input);
       if (!status.ok()) {
@@ -949,7 +949,7 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
       has_current_user_key = false;
       last_sequence_for_key = kMaxSequenceNumber;
     } else {
-      if (!has_current_user_key ||
+      if (!has_current_user_key ||                                              //xsx// 如果是新的key，则刷新last_sequence_for_key
           user_comparator()->Compare(ikey.user_key, Slice(current_user_key)) !=
               0) {
         // First occurrence of this user key
@@ -958,12 +958,12 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
         last_sequence_for_key = kMaxSequenceNumber;
       }
 
-      if (last_sequence_for_key <= compact->smallest_snapshot) {
+      if (last_sequence_for_key <= compact->smallest_snapshot) {                //xsx// smallest_snapshot 储存当前处理的最小序列号，对于同一个key，较老的entry将被丢弃
         // Hidden by an newer entry for same user key
         drop = true;  // (A)
       } else if (ikey.type == kTypeDeletion &&
                  ikey.sequence <= compact->smallest_snapshot &&
-                 compact->compaction->IsBaseLevelForKey(ikey.user_key)) {
+                 compact->compaction->IsBaseLevelForKey(ikey.user_key)) {       //xsx// 在>=level+2的记录(entry)中已经没有这个key，所以可以这个记录(entry)删掉
         // For this user key:
         // (1) there is no data in higher levels
         // (2) data in lower levels will have larger sequence numbers
@@ -998,10 +998,10 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
         compact->current_output()->smallest.DecodeFrom(key);
       }
       compact->current_output()->largest.DecodeFrom(key);
-      compact->builder->Add(key, input->value());
+      compact->builder->Add(key, input->value());                               //xsx// 追加key/value到TableBuilder
 
       // Close output file if it is big enough
-      if (compact->builder->FileSize() >=
+      if (compact->builder->FileSize() >=                                       //xsx// 如果新文件到达限制(默认2MB)，则结束该文件
           compact->compaction->MaxOutputFileSize()) {
         status = FinishCompactionOutputFile(compact, input);
         if (!status.ok()) {

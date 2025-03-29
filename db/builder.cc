@@ -59,7 +59,7 @@ Status BuildTable(const std::string& dbname, Env* env, const Options& options,  
 
     if (s.ok()) {
       // Verify that the table is usable
-      Iterator* it = table_cache->NewIterator(ReadOptions(), meta->number,
+      Iterator* it = table_cache->NewIterator(ReadOptions(), meta->number,      //xsx// 创建该文件的迭代器(带缓存，会在创建时mmap文件到内存中)
                                               meta->file_size);
       s = it->status();
       delete it;

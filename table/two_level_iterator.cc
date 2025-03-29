@@ -52,23 +52,23 @@ class TwoLevelIterator : public Iterator {
   void SaveError(const Status& s) {
     if (status_.ok() && !s.ok()) status_ = s;
   }
-  void SkipEmptyDataBlocksForward();
-  void SkipEmptyDataBlocksBackward();
+  void SkipEmptyDataBlocksForward();                                            //xsx// 向后跳过不可用的block(数据)
+  void SkipEmptyDataBlocksBackward();                                           //xsx// 向前跳过不可用的block(数据)
   void SetDataIterator(Iterator* data_iter);
   void InitDataBlock();
 
-  BlockFunction block_function_;
-  void* arg_;
+  BlockFunction block_function_;                                                //xsx// 获取子迭代器(data_iter_)的回调
+  void* arg_;                                                                   //xsx// 调用block_function_的参数
   const ReadOptions options_;
   Status status_;
   IteratorWrapper index_iter_;                                                  //xsx// 封装LevelFileNumIterator，其key为文件列表当前遍历文件的最大key
-  IteratorWrapper data_iter_;  // May be nullptr
+  IteratorWrapper data_iter_;  // May be nullptr                                //xsx// 由block_function初始化
   // If data_iter_ is non-null, then "data_block_handle_" holds the
   // "index_value" passed to block_function_ to create the data_iter_.
   std::string data_block_handle_;
 };
 
-TwoLevelIterator::TwoLevelIterator(Iterator* index_iter,
+TwoLevelIterator::TwoLevelIterator(Iterator* index_iter,                        //xsx// 两级迭代器，将index_iter的值作为参数，传递到block_function来初始化data_iter_，实际输出data_iter的value
                                    BlockFunction block_function, void* arg,
                                    const ReadOptions& options)
     : block_function_(block_function),
@@ -153,7 +153,7 @@ void TwoLevelIterator::InitDataBlock() {
       // data_iter_ is already constructed with this iterator, so
       // no need to change anything
     } else {
-      Iterator* iter = (*block_function_)(arg_, options_, handle);              //xsx// 这里获取到文件数据迭代器
+      Iterator* iter = (*block_function_)(arg_, options_, handle);              //xsx// 获取子迭代器
       data_block_handle_.assign(handle.data(), handle.size());
       SetDataIterator(iter);
     }

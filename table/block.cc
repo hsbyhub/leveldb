@@ -34,7 +34,7 @@ Block::Block(const BlockContents& contents)
       // The size is too small for NumRestarts()
       size_ = 0;
     } else {
-      restart_offset_ = size_ - (1 + NumRestarts()) * sizeof(uint32_t);
+      restart_offset_ = size_ - (1 + NumRestarts()) * sizeof(uint32_t);         //xsx// 重启点列表的偏移量
     }
   }
 }

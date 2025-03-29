@@ -156,19 +156,19 @@ class DBImpl : public DB {
   }
 
   // Constant after construction
-  Env* const env_;
-  const InternalKeyComparator internal_comparator_;
-  const InternalFilterPolicy internal_filter_policy_;
+  Env* const env_;                                                              //xsx// 与os环境相关的操作接口，例如读写文件
+  const InternalKeyComparator internal_comparator_;                             //xsx// 内部key(<user_key><sequence_num><value_type>)的对比方法
+  const InternalFilterPolicy internal_filter_policy_;                           //xsx// 内部key(<user_key><sequence_num><value_type>)过滤规则，例如布隆过滤器
   const Options options_;  // options_.comparator == &internal_comparator_
   const bool owns_info_log_;
   const bool owns_cache_;
   const std::string dbname_;
 
   // table_cache_ provides its own synchronization
-  TableCache* const table_cache_;
+  TableCache* const table_cache_;                                               //xsx// sstable文件的读缓存，主要在get和compact阶段读文件使用
 
   // Lock over the persistent DB state.  Non-null iff successfully acquired.
-  FileLock* db_lock_;
+  FileLock* db_lock_;                                                           //xsx// 锁住整个DB的目录(db_name_)
 
   // State below is protected by mutex_
   port::Mutex mutex_;
@@ -190,7 +190,7 @@ class DBImpl : public DB {
 
   // Set of table files to protect from deletion because they are
   // part of ongoing compactions.
-  std::set<uint64_t> pending_outputs_ GUARDED_BY(mutex_);
+  std::set<uint64_t> pending_outputs_ GUARDED_BY(mutex_);                       //xsx// 这里保持一些未提交到version_set但是再内存中有操作的新文件的file_number, 比如 新的level-0文件、合并产生的新文件
 
   // Has a background compaction been scheduled or is running?
   bool background_compaction_scheduled_ GUARDED_BY(mutex_);

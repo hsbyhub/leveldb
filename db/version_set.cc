@@ -160,7 +160,7 @@ bool SomeFileOverlapsRange(const InternalKeyComparator& icmp,                   
 // is the largest key that occurs in the file, and value() is an
 // 16-byte value containing the file number and file size, both
 // encoded using EncodeFixed64.
-class Version::LevelFileNumIterator : public Iterator {
+class Version::LevelFileNumIterator : public Iterator {                         //xsx// 内部使用的迭代器，主要是用于遍历文件的handle(<file_num:8><file_size:8>)
  public:
   LevelFileNumIterator(const InternalKeyComparator& icmp,
                        const std::vector<FileMetaData*>* flist)
@@ -214,7 +214,7 @@ static Iterator* GetFileIterator(void* arg, const ReadOptions& options,         
     return NewErrorIterator(
         Status::Corruption("FileReader invoked with unexpected value"));
   } else {
-    return cache->NewIterator(options, DecodeFixed64(file_value.data()),        //xsx// 返回文件数据迭代器，是实际文件内容读取的入口
+    return cache->NewIterator(options, DecodeFixed64(file_value.data()),        //xsx// 返回文件数据迭代器，是实际文件内容读取的入口，传入参数为文件句柄<file_num:8><file_size:8>
                               DecodeFixed64(file_value.data() + 8));
   }
 }
@@ -1233,19 +1233,19 @@ Iterator* VersionSet::MakeInputIterator(Compaction* c) {
       if (c->level() + which == 0) {
         const std::vector<FileMetaData*>& files = c->inputs_[which];
         for (size_t i = 0; i < files.size(); i++) {
-          list[num++] = table_cache_->NewIterator(options, files[i]->number,
+          list[num++] = table_cache_->NewIterator(options, files[i]->number,    //xsx// 对于level-0，使用单文件的迭代器
                                                   files[i]->file_size);
         }
       } else {
         // Create concatenating iterator for the files from this level
-        list[num++] = NewTwoLevelIterator(
+        list[num++] = NewTwoLevelIterator(                                      //xsx// 使用"拼接"迭代器将多个文件拼接起来
             new Version::LevelFileNumIterator(icmp_, &c->inputs_[which]),
             &GetFileIterator, table_cache_, options);
       }
     }
   }
   assert(num <= space);
-  Iterator* result = NewMergingIterator(&icmp_, list, num);
+  Iterator* result = NewMergingIterator(&icmp_, list, num);                     //xsx// 负责多个文件的合并，主方法是：总将多个文件列表(事实上是多个子迭代器)中的最小key作为next
   delete[] list;
   return result;
 }

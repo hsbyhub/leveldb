@@ -72,7 +72,7 @@ Status ReadBlock(RandomAccessFile* file, const ReadOptions& options,
   size_t n = static_cast<size_t>(handle.size());
   char* buf = new char[n + kBlockTrailerSize];
   Slice contents;
-  Status s = file->Read(handle.offset(), n + kBlockTrailerSize, &contents, buf);
+  Status s = file->Read(handle.offset(), n + kBlockTrailerSize, &contents, buf);//xsx// 在table_builder.cc:181中，写入块数据时设置handle.size = block_contents.size()，全部数据的长度还需要包括<type:1><crc:4>的5个字节，即kBlockTrailerSize
   if (!s.ok()) {
     delete[] buf;
     return s;
@@ -85,7 +85,7 @@ Status ReadBlock(RandomAccessFile* file, const ReadOptions& options,
   // Check the crc of the type and the block contents
   const char* data = contents.data();  // Pointer to where Read put the data
   if (options.verify_checksums) {
-    const uint32_t crc = crc32c::Unmask(DecodeFixed32(data + n + 1));
+    const uint32_t crc = crc32c::Unmask(DecodeFixed32(data + n + 1));           //xsx// crc校验数据
     const uint32_t actual = crc32c::Value(data, n + 1);
     if (actual != crc) {
       delete[] buf;
@@ -96,7 +96,7 @@ Status ReadBlock(RandomAccessFile* file, const ReadOptions& options,
 
   switch (data[n]) {
     case kNoCompression:
-      if (data != buf) {
+      if (data != buf) {                                                        //xsx//**// 如果数据没有被压缩，判断file->Read()返回的数据是否指向buf从而进行不同处理，因为Posix实现下使用mmap读取文件，不需要使用外部的内存，因此减少了数据拷贝
         // File implementation gave us pointer to some other data.
         // Use it directly under the assumption that it will be live
         // while the file is open.
@@ -112,7 +112,7 @@ Status ReadBlock(RandomAccessFile* file, const ReadOptions& options,
 
       // Ok
       break;
-    case kSnappyCompression: {
+    case kSnappyCompression: {                                                  //xsx// 如果使用了压缩，那么需要进行解压缩，因此不可避免地需要使用新的buffer进行缓存，因此原来的data和buf不能复用
       size_t ulength = 0;
       if (!port::Snappy_GetUncompressedLength(data, n, &ulength)) {
         delete[] buf;
@@ -125,7 +125,7 @@ Status ReadBlock(RandomAccessFile* file, const ReadOptions& options,
         return Status::Corruption("corrupted compressed block contents");
       }
       delete[] buf;
-      result->data = Slice(ubuf, ulength);
+      result->data = Slice(ubuf, ulength);                                      //xsx// 返回的数据指向新的buf，并且标识是堆内存
       result->heap_allocated = true;
       result->cachable = true;
       break;

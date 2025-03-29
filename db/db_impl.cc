@@ -853,7 +853,7 @@ Status DBImpl::FinishCompactionOutputFile(CompactionState* compact,
     s = compact->outfile->Close();
   }
   delete compact->outfile;
-  compact->outfile = nullptr;f
+  compact->outfile = nullptr;
 
   if (s.ok() && current_entries > 0) {                                          //xsx// 校验合成的新文件可打开
     // Verify that the table is usable

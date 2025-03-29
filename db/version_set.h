@@ -374,7 +374,7 @@ class Compaction {
   // State used to check for number of overlapping grandparent files
   // (parent == level_ + 1, grandparent == level_ + 2)
   std::vector<FileMetaData*> grandparents_;                                     //xsx// 合并范围(range of input files)包含的level+2层的文件
-  size_t grandparent_index_;  // Index in grandparent_starts_
+  size_t grandparent_index_;  // Index in grandparent_starts_                   //xsx// 统计覆盖level+2层文件大小时的索引
   bool seen_key_;             // Some output key has been seen
   int64_t overlapped_bytes_;  // Bytes of overlap between current output
                               // and grandparent files

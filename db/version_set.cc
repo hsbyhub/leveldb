@@ -160,7 +160,7 @@ bool SomeFileOverlapsRange(const InternalKeyComparator& icmp,                   
 // is the largest key that occurs in the file, and value() is an
 // 16-byte value containing the file number and file size, both
 // encoded using EncodeFixed64.
-class Version::LevelFileNumIterator : public Iterator {                         //xsx// 内部使用的迭代器，主要是用于遍历文件的handle(<file_num:8><file_size:8>)
+class Version::LevelFileNumIterator : public Iterator {                         //xsx// 内部使用的迭代器，主要是用于遍历文件的句柄(<file_num:8><file_size:8>)
  public:
   LevelFileNumIterator(const InternalKeyComparator& icmp,
                        const std::vector<FileMetaData*>* flist)
@@ -1238,7 +1238,7 @@ Iterator* VersionSet::MakeInputIterator(Compaction* c) {
         }
       } else {
         // Create concatenating iterator for the files from this level
-        list[num++] = NewTwoLevelIterator(                                      //xsx// 使用"拼接"迭代器将多个文件拼接起来
+        list[num++] = NewTwoLevelIterator(                                      //xsx// 使用"拼接"迭代器将多个文件拼接起来，即 index_iter_的数据源为文件列表，其value()返回文件句柄，通过 GetFileIterator 获取到每个文件句柄获得 data_iter_，从而遍历到文件数据。并且, 在更底层的Table::NewIterator中，也使用了这个NewTwoLevelIterator，用于拼接遍历SSTable的 index_block_ 和 data_block_
             new Version::LevelFileNumIterator(icmp_, &c->inputs_[which]),
             &GetFileIterator, table_cache_, options);
       }

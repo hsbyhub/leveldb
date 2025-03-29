@@ -68,19 +68,19 @@ struct DBImpl::CompactionState {
         builder(nullptr),
         total_bytes(0) {}
 
-  Compaction* const compaction;
+  Compaction* const compaction;                                                 //xsx// 合并的输入信息
 
   // Sequence numbers < smallest_snapshot are not significant since we
   // will never have to service a snapshot below smallest_snapshot.
   // Therefore if we have seen a sequence number S <= smallest_snapshot,
   // we can drop all entries for the same key with sequence numbers < S.
-  SequenceNumber smallest_snapshot;
+  SequenceNumber smallest_snapshot;                                             //xsx// 当前遍历的最小sequence_num
 
   std::vector<Output> outputs;                                                  //xsx// 输出文件的元信息列表
 
   // State kept for output being generated
-  WritableFile* outfile;
-  TableBuilder* builder;
+  WritableFile* outfile;                                                        //xsx// 当前新SSTable的写管理器
+  TableBuilder* builder;                                                        //xsx// 当前新SSTable的构建器
 
   uint64_t total_bytes;
 };
@@ -835,7 +835,7 @@ Status DBImpl::FinishCompactionOutputFile(CompactionState* compact,
   Status s = input->status();
   const uint64_t current_entries = compact->builder->NumEntries();
   if (s.ok()) {
-    s = compact->builder->Finish();
+    s = compact->builder->Finish();                                             //xsx// 刷出新的SSTable
   } else {
     compact->builder->Abandon();
   }
@@ -853,9 +853,9 @@ Status DBImpl::FinishCompactionOutputFile(CompactionState* compact,
     s = compact->outfile->Close();
   }
   delete compact->outfile;
-  compact->outfile = nullptr;
+  compact->outfile = nullptr;f
 
-  if (s.ok() && current_entries > 0) {
+  if (s.ok() && current_entries > 0) {                                          //xsx// 校验合成的新文件可打开
     // Verify that the table is usable
     Iterator* iter =
         table_cache_->NewIterator(ReadOptions(), output_number, current_bytes);
@@ -1003,7 +1003,7 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
       // Close output file if it is big enough
       if (compact->builder->FileSize() >=                                       //xsx// 如果新文件到达限制(默认2MB)，则结束该文件
           compact->compaction->MaxOutputFileSize()) {
-        status = FinishCompactionOutputFile(compact, input);
+        status = FinishCompactionOutputFile(compact, input);                    //xsx// 刷出SSTable
         if (!status.ok()) {
           break;
         }
@@ -1017,7 +1017,7 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
     status = Status::IOError("Deleting DB during compaction");
   }
   if (status.ok() && compact->builder != nullptr) {
-    status = FinishCompactionOutputFile(compact, input);
+    status = FinishCompactionOutputFile(compact, input);                        //xsx// 刷出最后剩余的key
   }
   if (status.ok()) {
     status = input->status();

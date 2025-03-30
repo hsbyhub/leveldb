@@ -879,14 +879,14 @@ Status DBImpl::InstallCompactionResults(CompactionState* compact) {
       static_cast<long long>(compact->total_bytes));
 
   // Add compaction outputs
-  compact->compaction->AddInputDeletions(compact->compaction->edit());
+  compact->compaction->AddInputDeletions(compact->compaction->edit());          //xsx// 在版本编辑记录中删除输入文件
   const int level = compact->compaction->level();
-  for (size_t i = 0; i < compact->outputs.size(); i++) {
+  for (size_t i = 0; i < compact->outputs.size(); i++) {                        //xsx// 在版本编辑记录中增加输出文件
     const CompactionState::Output& out = compact->outputs[i];
     compact->compaction->edit()->AddFile(level + 1, out.number, out.file_size,
                                          out.smallest, out.largest);
   }
-  return versions_->LogAndApply(compact->compaction->edit(), &mutex_);
+  return versions_->LogAndApply(compact->compaction->edit(), &mutex_);          //xsx// 应用本次修改
 }
 
 Status DBImpl::DoCompactionWork(CompactionState* compact) {
@@ -958,12 +958,12 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
         last_sequence_for_key = kMaxSequenceNumber;
       }
 
-      if (last_sequence_for_key <= compact->smallest_snapshot) {                //xsx// smallest_snapshot 储存当前处理的最小序列号，对于同一个key，较老的entry将被丢弃
+      if (last_sequence_for_key <= compact->smallest_snapshot) {                //xsx// 当 last_sequence_for_key <= compact->smallest_snapshot 为true时，说明key存在更新的记录被提交，可以进行丢弃。当然，这里的根据是 对于同一个key来说，sequence_num是降序遍历的，参考InternalKeyComparator::Compare()的实现
         // Hidden by an newer entry for same user key
         drop = true;  // (A)
       } else if (ikey.type == kTypeDeletion &&
                  ikey.sequence <= compact->smallest_snapshot &&
-                 compact->compaction->IsBaseLevelForKey(ikey.user_key)) {       //xsx// 在>=level+2的记录(entry)中已经没有这个key，所以可以这个记录(entry)删掉
+                 compact->compaction->IsBaseLevelForKey(ikey.user_key)) {       //xsx// 在>=level+2的记录(entry)中已经没有这个key，所以可以这个记录(entry)删掉，因为没有key可以删除
         // For this user key:
         // (1) there is no data in higher levels
         // (2) data in lower levels will have larger sequence numbers
@@ -1025,7 +1025,7 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
   delete input;
   input = nullptr;
 
-  CompactionStats stats;
+  CompactionStats stats;                                                        //xsx// 统计合并的开销、输入、输出数据大小
   stats.micros = env_->NowMicros() - start_micros - imm_micros;
   for (int which = 0; which < 2; which++) {
     for (int i = 0; i < compact->compaction->num_input_files(which); i++) {

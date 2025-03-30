@@ -50,7 +50,7 @@ int InternalKeyComparator::Compare(const Slice& akey, const Slice& bkey) const {
   //    decreasing sequence number
   //    decreasing type (though sequence# should be enough to disambiguate)
   int r = user_comparator_->Compare(ExtractUserKey(akey), ExtractUserKey(bkey));
-  if (r == 0) {
+  if (r == 0) {                                                                 //xsx//**// 这里对user_key的比较是升序的; tag的比较是降序的，且高8位是value_type，其优先级更高，而低56位是sequence_num，其优先级最低
     const uint64_t anum = DecodeFixed64(akey.data() + akey.size() - 8);
     const uint64_t bnum = DecodeFixed64(bkey.data() + bkey.size() - 8);
     if (anum > bnum) {

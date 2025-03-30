@@ -298,10 +298,10 @@ class VersionSet {
   const Options* const options_;
   TableCache* const table_cache_;                                               //xsx// 管理SSTable文件缓存，leveldb通过TableCache来间接读取SSTable文件
   const InternalKeyComparator icmp_;
-  uint64_t next_file_number_;
-  uint64_t manifest_file_number_;
-  uint64_t last_sequence_;
-  uint64_t log_number_;
+  uint64_t next_file_number_;                                                   //xsx// 下一个文件编号
+  uint64_t manifest_file_number_;                                               //xsx// 当前DB的MANIFEST文件编号
+  uint64_t last_sequence_;                                                      //xsx// 当前DB的最新key记录(entry)的序列号
+  uint64_t log_number_;                                                         //xsx// 当前DB的WAL日志文件编号
   uint64_t prev_log_number_;  // 0 or backing store for memtable being compacted
 
   // Opened lazily

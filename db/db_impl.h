@@ -116,7 +116,7 @@ class DBImpl : public DB {
   void MaybeIgnoreError(Status* s) const;
 
   // Delete any unneeded files and stale in-memory entries.
-  void RemoveObsoleteFiles() EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+  void RemoveObsoleteFiles() EXCLUSIVE_LOCKS_REQUIRED(mutex_);                  //xsx// 清理无关紧要的文件，比如 被合并的文件
 
   // Compact the in-memory write buffer to disk.  Switches to a new
   // log-file/memtable and writes a new descriptor iff successful.
@@ -137,18 +137,18 @@ class DBImpl : public DB {
 
   void RecordBackgroundError(const Status& s);
 
-  void MaybeScheduleCompaction() EXCLUSIVE_LOCKS_REQUIRED(mutex_);
-  static void BGWork(void* db);
-  void BackgroundCall();
-  void BackgroundCompaction() EXCLUSIVE_LOCKS_REQUIRED(mutex_);
-  void CleanupCompaction(CompactionState* compact)
+  void MaybeScheduleCompaction() EXCLUSIVE_LOCKS_REQUIRED(mutex_);              //xsx// 调度后台进程进行合并，包括：level-0的刷出、手动触发合并、size_compaction、seek_compaction
+  static void BGWork(void* db);                                                 //xsx// 后台线程回调
+  void BackgroundCall();                                                        //xsx// 后台进程实际worker
+  void BackgroundCompaction() EXCLUSIVE_LOCKS_REQUIRED(mutex_);                 //xsx// 处理合并
+  void CleanupCompaction(CompactionState* compact)                              //xsx// 回收合并状态资源，释放pending文件
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
-  Status DoCompactionWork(CompactionState* compact)
+  Status DoCompactionWork(CompactionState* compact)                             //xsx// 实际的合并处理逻辑
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
-  Status OpenCompactionOutputFile(CompactionState* compact);
-  Status FinishCompactionOutputFile(CompactionState* compact, Iterator* input);
-  Status InstallCompactionResults(CompactionState* compact)
+  Status OpenCompactionOutputFile(CompactionState* compact);                    //xsx// 合并文件时新建新SSTable文件
+  Status FinishCompactionOutputFile(CompactionState* compact, Iterator* input); //xsx// 合并文件时刷出新SSTable文件
+  Status InstallCompactionResults(CompactionState* compact)                     //xsx// 合并文件时将提交版本变动，使其生效
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   const Comparator* user_comparator() const {

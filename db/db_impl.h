@@ -37,15 +37,15 @@ class DBImpl : public DB {
 
   // Implementations of the DB interface
   Status Put(const WriteOptions&, const Slice& key,
-             const Slice& value) override;
-  Status Delete(const WriteOptions&, const Slice& key) override;
-  Status Write(const WriteOptions& options, WriteBatch* updates) override;
+             const Slice& value) override;                                      //xsx// 写入数据(覆盖)
+  Status Delete(const WriteOptions&, const Slice& key) override;                //xsx// 删除数据(覆盖)
+  Status Write(const WriteOptions& options, WriteBatch* updates) override;      //xsx// 写入数据的实现
   Status Get(const ReadOptions& options, const Slice& key,
-             std::string* value) override;
-  Iterator* NewIterator(const ReadOptions&) override;
-  const Snapshot* GetSnapshot() override;
-  void ReleaseSnapshot(const Snapshot* snapshot) override;
-  bool GetProperty(const Slice& property, std::string* value) override;
+             std::string* value) override;                                      //xsx// 获取数据的实现
+  Iterator* NewIterator(const ReadOptions&) override;                           //xsx// 创建DB的迭代器，用于遍历所有数据
+  const Snapshot* GetSnapshot() override;                                       //xsx// 获取快照
+  void ReleaseSnapshot(const Snapshot* snapshot) override;                      //xsx// 释放快照
+  bool GetProperty(const Slice& property, std::string* value) override;         //xsx// 用于获取当前DB的信息，例如 stats(SSTable文件读写信息)、sstables(SSTable文件列表)
   void GetApproximateSizes(const Range* range, int n, uint64_t* sizes) override;
   void CompactRange(const Slice* begin, const Slice* end) override;
 
@@ -171,36 +171,36 @@ class DBImpl : public DB {
   FileLock* db_lock_;                                                           //xsx// 锁住整个DB的目录(db_name_)
 
   // State below is protected by mutex_
-  port::Mutex mutex_;
-  std::atomic<bool> shutting_down_;
-  port::CondVar background_work_finished_signal_ GUARDED_BY(mutex_);
-  MemTable* mem_;
-  MemTable* imm_ GUARDED_BY(mutex_);  // Memtable being compacted
-  std::atomic<bool> has_imm_;         // So bg thread can detect non-null imm_
+  port::Mutex mutex_;                                                           //xsx// DB实例全局锁
+  std::atomic<bool> shutting_down_;                                             //xsx// DB实例销毁标识
+  port::CondVar background_work_finished_signal_ GUARDED_BY(mutex_);            //xsx// 后台进程完成信号
+  MemTable* mem_;                                                               //xsx// memtable
+  MemTable* imm_ GUARDED_BY(mutex_);  // Memtable being compacted               //xsx// immemtable
+  std::atomic<bool> has_imm_;         // So bg thread can detect non-null imm_  //xsx// immemtable标识
   WritableFile* logfile_;                                                       //xsx// WAL-log文件操作模块，属于env层，支持多种平台实现，典型的有PosixWritableFile
-  uint64_t logfile_number_ GUARDED_BY(mutex_);
+  uint64_t logfile_number_ GUARDED_BY(mutex_);                                  //xsx// WAL-log文件的标号
   log::Writer* log_;                                                            //xsx// WAL-log编码器, 与MemTable的数据同步，持久化在磁盘上，Put数据的时候，只有WAL-log写成功才会继续执行
-  uint32_t seed_ GUARDED_BY(mutex_);  // For sampling.
+  uint32_t seed_ GUARDED_BY(mutex_);  // For sampling.                          //xsx// 抽样时的种子，自动自增
 
   // Queue of writers.
   std::deque<Writer*> writers_ GUARDED_BY(mutex_);                              //xsx// 写任务队列, 插入队列头部的线程获得执行权，其它线程等待自己的任务被执行结束后直接返回
-  WriteBatch* tmp_batch_ GUARDED_BY(mutex_);
+  WriteBatch* tmp_batch_ GUARDED_BY(mutex_);                                    //xsx// 写入数据时，收集批量数据的临时内存
 
-  SnapshotList snapshots_ GUARDED_BY(mutex_);
+  SnapshotList snapshots_ GUARDED_BY(mutex_);                                   //xsx// 快照列表
 
   // Set of table files to protect from deletion because they are
   // part of ongoing compactions.
   std::set<uint64_t> pending_outputs_ GUARDED_BY(mutex_);                       //xsx// 这里保持一些未提交到version_set但是再内存中有操作的新文件的file_number, 比如 新的level-0文件、合并产生的新文件
 
   // Has a background compaction been scheduled or is running?
-  bool background_compaction_scheduled_ GUARDED_BY(mutex_);
+  bool background_compaction_scheduled_ GUARDED_BY(mutex_);                     //xsx// 标识后台线程(合并)正在运行
 
-  ManualCompaction* manual_compaction_ GUARDED_BY(mutex_);
+  ManualCompaction* manual_compaction_ GUARDED_BY(mutex_);                      //xsx// 支持手动合并
 
-  VersionSet* const versions_ GUARDED_BY(mutex_);
+  VersionSet* const versions_ GUARDED_BY(mutex_);                               //xsx// 版本管理器
 
   // Have we encountered a background error in paranoid mode?
-  Status bg_error_ GUARDED_BY(mutex_);
+  Status bg_error_ GUARDED_BY(mutex_);                                          //xsx// 后台线程异常标识
 
   CompactionStats stats_[config::kNumLevels] GUARDED_BY(mutex_);                //xsx// 统计合并操作的开销数据
 };

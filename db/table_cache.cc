@@ -43,7 +43,7 @@ Status TableCache::FindTable(uint64_t file_number, uint64_t file_size,
   Status s;
   char buf[sizeof(file_number)];
   EncodeFixed64(buf, file_number);
-  Slice key(buf, sizeof(buf));
+  Slice key(buf, sizeof(buf));                                                  //xsx// 使用文件编号作为key
   *handle = cache_->Lookup(key);                                                //xsx// 在缓存中查找文件
   if (*handle == nullptr) {
     std::string fname = TableFileName(dbname_, file_number);
@@ -102,7 +102,7 @@ Status TableCache::Get(const ReadOptions& options, uint64_t file_number,
                        void (*handle_result)(void*, const Slice&,
                                              const Slice&)) {
   Cache::Handle* handle = nullptr;
-  Status s = FindTable(file_number, file_size, &handle);
+  Status s = FindTable(file_number, file_size, &handle);                        //xsx// 查找文件,使用handle接收句柄(LRUHandle*)
   if (s.ok()) {
     Table* t = reinterpret_cast<TableAndFile*>(cache_->Value(handle))->table;
     s = t->InternalGet(options, k, arg, handle_result);

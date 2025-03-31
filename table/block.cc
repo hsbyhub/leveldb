@@ -22,7 +22,7 @@ inline uint32_t Block::NumRestarts() const {
   return DecodeFixed32(data_ + size_ - sizeof(uint32_t));
 }
 
-Block::Block(const BlockContents& contents)
+Block::Block(const BlockContents& contents)                                     //xsx// 块的格式为：<shared><non_shared><value_size><key_non_shared_substr><value_str>...<restart_point_list:n*4><restart_point_count:4>
     : data_(contents.data.data()),
       size_(contents.data.size()),
       owned_(contents.heap_allocated) {

@@ -32,18 +32,18 @@ struct TableBuilder::Rep {
                          ? nullptr
                          : new FilterBlockBuilder(opt.filter_policy)),
         pending_index_entry(false) {
-    index_block_options.block_restart_interval = 1;
+    index_block_options.block_restart_interval = 1;                             //xsx// 索引块构造器使用的是用户options的副本，主要是设置"块重启步长"为1
   }
 
-  Options options;                  //xsx// 配置信息
-  Options index_block_options;      //xsx// 配置信息，构造时copy来自options，但block_restart_interval重置为1，保证索引块中的条目精确匹配
-  WritableFile* file;               //xsx// 写文件接口实例
-  uint64_t offset;                  //xsx// 当前写文件的偏移量
-  Status status;                    //xsx// 当前的构造任务状态
-  BlockBuilder data_block;          //xsx// 数据块构造器
-  BlockBuilder index_block;         //xsx// 索引块构造器
-  std::string last_key;             //xsx// 当前写入的最后一个key，用于Add()时校验文件数据有序性
-  int64_t num_entries;              //xsx// 当前写入的数据个数
+  Options options;                                                              //xsx// 配置信息
+  Options index_block_options;                                                  //xsx// 配置信息，构造时copy来自options，但block_restart_interval重置为1，保证索引块中的条目精确匹配
+  WritableFile* file;                                                           //xsx// 写文件接口实例
+  uint64_t offset;                                                              //xsx// 当前写文件的偏移量
+  Status status;                                                                //xsx// 当前的构造任务状态
+  BlockBuilder data_block;                                                      //xsx// 数据块构造器
+  BlockBuilder index_block;                                                     //xsx// 索引块构造器
+  std::string last_key;                                                         //xsx// 当前写入的最后一个key，用于Add()时校验文件数据有序性
+  int64_t num_entries;                                                          //xsx// 当前写入的数据个数
   bool closed;  // Either Finish() or Abandon() has been called.
   FilterBlockBuilder* filter_block; //xsx// 布隆过滤器构造器
 
@@ -56,10 +56,10 @@ struct TableBuilder::Rep {
   // blocks.
   //
   // Invariant: r->pending_index_entry is true only if data_block is empty.
-  bool pending_index_entry;         //xsx// 标识当前数据块为空，需要写入上一个数据块的索引
-  BlockHandle pending_handle;  // Handle to add to index block
+  bool pending_index_entry;                                                     //xsx// 标识当前数据块为空，需要写入上一个数据块的索引
+  BlockHandle pending_handle;  // Handle to add to index block                  //xsx//**// 当一个数据块产生时，不立即将其handle(句柄)写入index_bloc，而是存储在这里，这里是为了能获得一个尽量短的边界，提高二分查找时的效率
 
-  std::string compressed_output;    //xsx// 压缩数据时的临时输出buffer
+  std::string compressed_output;                                                //xsx// 压缩数据时的临时输出buffer
 };
 
 TableBuilder::TableBuilder(const Options& options, WritableFile* file)

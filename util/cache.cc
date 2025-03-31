@@ -271,9 +271,9 @@ Cache::Handle* LRUCache::Insert(const Slice& key, uint32_t hash, void* value,
   MutexLock l(&mutex_);
 
   LRUHandle* e =
-      reinterpret_cast<LRUHandle*>(malloc(sizeof(LRUHandle) - 1 + key.size()));
-  e->value = value;
-  e->deleter = deleter;
+      reinterpret_cast<LRUHandle*>(malloc(sizeof(LRUHandle) - 1 + key.size())); //xsx// 创建句柄
+  e->value = value;                                                             //xsx// value实际是 &TableAndFile
+  e->deleter = deleter;                                                         //xsx// 在淘汰时释放value的回调
   e->charge = charge;
   e->key_length = key.size();
   e->hash = hash;

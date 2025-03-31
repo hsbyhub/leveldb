@@ -252,8 +252,8 @@ enum SaverState {
   kDeleted,
   kCorrupt,
 };
-struct Saver {
-  SaverState state;
+struct Saver {                                                                  //xsx// 用于返回查询数据
+  SaverState state;                                                             //xsx// 查询状态
   const Comparator* ucmp;
   Slice user_key;
   std::string* value;

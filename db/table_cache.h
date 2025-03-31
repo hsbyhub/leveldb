@@ -19,7 +19,7 @@ namespace leveldb {
 
 class Env;
 
-class TableCache {
+class TableCache {                                                              //xsx// 封装LRUCache，主要提供 Table实例 的查找和缓存的能力
  public:
   TableCache(const std::string& dbname, const Options& options, int entries);
   ~TableCache();
@@ -44,7 +44,7 @@ class TableCache {
   void Evict(uint64_t file_number);
 
  private:
-  Status FindTable(uint64_t file_number, uint64_t file_size, Cache::Handle**);
+  Status FindTable(uint64_t file_number, uint64_t file_size, Cache::Handle**);  //xsx// 负责查找文件，首先在缓存中查找,如果查找不到，则创建并插入缓存
 
   Env* const env_;
   const std::string dbname_;

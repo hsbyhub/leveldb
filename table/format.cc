@@ -61,7 +61,7 @@ Status Footer::DecodeFrom(Slice* input) {
   return result;
 }
 
-Status ReadBlock(RandomAccessFile* file, const ReadOptions& options,
+Status ReadBlock(RandomAccessFile* file, const ReadOptions& options,            //xsx//**// 块的格式为: <block_contents(may be compression):n><type(default kSnappyCompression):1><crc:4>
                  const BlockHandle& handle, BlockContents* result) {
   result->data = Slice();
   result->cachable = false;

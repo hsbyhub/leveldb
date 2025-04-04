@@ -103,7 +103,7 @@ Status ReadBlock(RandomAccessFile* file, const ReadOptions& options,            
         delete[] buf;
         result->data = Slice(data, n);
         result->heap_allocated = false;
-        result->cachable = false;  // Do not double-cache
+        result->cachable = false;  // Do not double-cache                       //xsx// 这里标记该内存块不应该被二次缓存，因为file->Read返回的内存块可能由内部进行缓存管理，例如Posix实现下使用mmap进行内存分配，外部没必要重复进行缓存
       } else {
         result->data = Slice(buf, n);
         result->heap_allocated = true;

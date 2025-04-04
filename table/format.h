@@ -79,9 +79,9 @@ static const uint64_t kTableMagicNumber = 0xdb4775248b80fb57ull;
 static const size_t kBlockTrailerSize = 5;
 
 struct BlockContents {
-  Slice data;           // Actual contents of data
-  bool cachable;        // True iff data can be cached
-  bool heap_allocated;  // True iff caller should delete[] data.data()
+  Slice data;           // Actual contents of data                              //xsx// 块内容的首地址
+  bool cachable;        // True iff data can be cached                          //xsx// 标识该块内存不应该被缓存，比如data指向mmap的内存时
+  bool heap_allocated;  // True iff caller should delete[] data.data()          //xsx// 块内存是否由堆分配，如果是，Block对象将接管该内存块(Bloc析构时调用delete)
 };
 
 // Read the block identified by "handle" from "file".  On failure

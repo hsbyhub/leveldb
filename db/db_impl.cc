@@ -1345,13 +1345,13 @@ Status DBImpl::MakeRoomForWrite(bool force) {
       allow_delay = false;  // Do not delay a single write more than once
       mutex_.Lock();
     } else if (!force &&
-               (mem_->ApproximateMemoryUsage() <= options_.write_buffer_size)) {      //xsx// 如果内存足够，则不刷出内存
+               (mem_->ApproximateMemoryUsage() <= options_.write_buffer_size)) {//xsx// 如果内存足够，则不刷出内存
       // There is room in current memtable
       break;
     } else if (imm_ != nullptr) {
       // We have filled up the current memtable, but the previous
       // one is still being compacted, so we wait.
-      Log(options_.info_log, "Current memtable full; waiting...\n");                  //xsx// 上一个memtable正在被转换
+      Log(options_.info_log, "Current memtable full; waiting...\n");            //xsx// 上一个memtable正在被转换
       background_work_finished_signal_.Wait();
     } else if (versions_->NumLevelFiles(0) >= config::kL0_StopWritesTrigger) {
       // There are too many level-0 files.

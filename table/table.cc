@@ -159,13 +159,13 @@ Iterator* Table::BlockReader(void* arg, const ReadOptions& options,
 
   BlockHandle handle;
   Slice input = index_value;
-  Status s = handle.DecodeFrom(&input);
+  Status s = handle.DecodeFrom(&input);                                         //xsx// 解码数据块的句柄(handle)
   // We intentionally allow extra stuff in index_value so that we
   // can add more features in the future.
 
   if (s.ok()) {
     BlockContents contents;
-    if (block_cache != nullptr) {
+    if (block_cache != nullptr) {                                               //xsx// 尝试缓存中获取块内容
       char cache_key_buffer[16];
       EncodeFixed64(cache_key_buffer, table->rep_->cache_id);
       EncodeFixed64(cache_key_buffer + 8, handle.offset());
@@ -177,7 +177,7 @@ Iterator* Table::BlockReader(void* arg, const ReadOptions& options,
         s = ReadBlock(table->rep_->file, options, handle, &contents);
         if (s.ok()) {
           block = new Block(contents);
-          if (contents.cachable && options.fill_cache) {
+          if (contents.cachable && options.fill_cache) {                        //xsx// 如果块内容的内存由mmap管理，则不需要进行二次缓存了
             cache_handle = block_cache->Insert(key, block, block->size(),
                                                &DeleteCachedBlock);
           }
@@ -218,16 +218,16 @@ Status Table::InternalGet(const ReadOptions& options, const Slice& k, void* arg,
   Iterator* iiter = rep_->index_block->NewIterator(rep_->options.comparator);
   iiter->Seek(k);
   if (iiter->Valid()) {
-    Slice handle_value = iiter->value();
+    Slice handle_value = iiter->value();                                        //xsx// 此时的iiter->Value()为handle的encoding首地址
     FilterBlockReader* filter = rep_->filter;
     BlockHandle handle;
     if (filter != nullptr && handle.DecodeFrom(&handle_value).ok() &&
         !filter->KeyMayMatch(handle.offset(), k)) {
       // Not found
     } else {
-      Iterator* block_iter = BlockReader(this, options, iiter->value());
+      Iterator* block_iter = BlockReader(this, options, iiter->value());        //xsx// 读取DataBlock, 获取数据块的迭代器
       block_iter->Seek(k);
-      if (block_iter->Valid()) {
+      if (block_iter->Valid()) {                                                //xsx// 如果找到key大于等于key，调用回调处理该结果，对于VersionSet::Get(), 调用的是SaveValue()，而arg是*State::Saver
         (*handle_result)(arg, block_iter->key(), block_iter->value());
       }
       s = block_iter->status();

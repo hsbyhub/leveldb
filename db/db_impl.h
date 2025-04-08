@@ -46,8 +46,8 @@ class DBImpl : public DB {
   const Snapshot* GetSnapshot() override;                                       //xsx// 获取快照
   void ReleaseSnapshot(const Snapshot* snapshot) override;                      //xsx// 释放快照
   bool GetProperty(const Slice& property, std::string* value) override;         //xsx// 用于获取当前DB的信息，例如 stats(SSTable文件读写信息)、sstables(SSTable文件列表)
-  void GetApproximateSizes(const Range* range, int n, uint64_t* sizes) override;
-  void CompactRange(const Slice* begin, const Slice* end) override;
+  void GetApproximateSizes(const Range* range, int n, uint64_t* sizes) override;//xsx// 获取n个range大致占用的存储字节数(压缩后)
+  void CompactRange(const Slice* begin, const Slice* end) override;             //xsx// 手动请求合并某范围
 
   // Extra methods (for testing) that are not in the public DB interface
 
@@ -87,7 +87,7 @@ class DBImpl : public DB {
 
   // Per level compaction stats.  stats_[level] stores the stats for
   // compactions that produced data for the specified "level".
-  struct CompactionStats {
+  struct CompactionStats {                                                      //xsx// 统计合并的读写和时间消耗
     CompactionStats() : micros(0), bytes_read(0), bytes_written(0) {}
 
     void Add(const CompactionStats& c) {
@@ -105,15 +105,15 @@ class DBImpl : public DB {
                                 SequenceNumber* latest_snapshot,
                                 uint32_t* seed);
 
-  Status NewDB();
+  Status NewDB();                                                               //xsx// 创建DB
 
   // Recover the descriptor from persistent storage.  May do a significant
   // amount of work to recover recently logged updates.  Any changes to
   // be made to the descriptor are added to *edit.
-  Status Recover(VersionEdit* edit, bool* save_manifest)
+  Status Recover(VersionEdit* edit, bool* save_manifest)                        //xsx// 从已有的MANIFEST中恢复DB到内存实例中
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
-  void MaybeIgnoreError(Status* s) const;
+  void MaybeIgnoreError(Status* s) const;                                       //xsx// 忽略某些异常，使DB实例继续可用，例如在插入数据到memtable时的异常
 
   // Delete any unneeded files and stale in-memory entries.
   void RemoveObsoleteFiles() EXCLUSIVE_LOCKS_REQUIRED(mutex_);                  //xsx// 清理无关紧要的文件，比如 被合并的文件
@@ -121,21 +121,21 @@ class DBImpl : public DB {
   // Compact the in-memory write buffer to disk.  Switches to a new
   // log-file/memtable and writes a new descriptor iff successful.
   // Errors are recorded in bg_error_.
-  void CompactMemTable() EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+  void CompactMemTable() EXCLUSIVE_LOCKS_REQUIRED(mutex_);                      //xsx// 将内存memtable刷出到SSTable，并记录到版本
 
-  Status RecoverLogFile(uint64_t log_number, bool last_log, bool* save_manifest,
+  Status RecoverLogFile(uint64_t log_number, bool last_log, bool* save_manifest,//xsx// 恢复WAL-log日志
                         VersionEdit* edit, SequenceNumber* max_sequence)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
-  Status WriteLevel0Table(MemTable* mem, VersionEdit* edit, Version* base)
+  Status WriteLevel0Table(MemTable* mem, VersionEdit* edit, Version* base)      //xsx// 将memtable刷出到SSTable文件
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
-  Status MakeRoomForWrite(bool force /* compact even if there is room? */)
+  Status MakeRoomForWrite(bool force /* compact even if there is room? */)      //xsx// 为写操作创建空间，例如转移 memtable->immemtable，并创建新的memtable
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
-  WriteBatch* BuildBatchGroup(Writer** last_writer)
+  WriteBatch* BuildBatchGroup(Writer** last_writer)                             //xsx// 聚合多个写操作的数据
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
-  void RecordBackgroundError(const Status& s);
+  void RecordBackgroundError(const Status& s);                                  //xsx// 登记后台线程的异常并通知其它线程
 
   void MaybeScheduleCompaction() EXCLUSIVE_LOCKS_REQUIRED(mutex_);              //xsx// 调度后台进程进行合并，包括：level-0的刷出、手动触发合并、size_compaction、seek_compaction
   static void BGWork(void* db);                                                 //xsx// 后台线程回调
@@ -151,7 +151,7 @@ class DBImpl : public DB {
   Status InstallCompactionResults(CompactionState* compact)                     //xsx// 合并文件时将提交版本变动，使其生效
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
-  const Comparator* user_comparator() const {
+  const Comparator* user_comparator() const {                                   //xsx// 从internal_comparator拿出userkey_comparator，区别在于 internal_key 在user_key的基础上追加了value_type:8和seq_num:56
     return internal_comparator_.user_comparator();
   }
 

@@ -280,13 +280,13 @@ class VersionSet {
   void Finalize(Version* v);
 
   void GetRange(const std::vector<FileMetaData*>& inputs, InternalKey* smallest,
-                InternalKey* largest);
+                InternalKey* largest);                                          //xsx// 获取inputs中key的范围
 
   void GetRange2(const std::vector<FileMetaData*>& inputs1,
                  const std::vector<FileMetaData*>& inputs2,
-                 InternalKey* smallest, InternalKey* largest);
+                 InternalKey* smallest, InternalKey* largest);                  //xsx// 获取inputs1和inputs2中key的范围
 
-  void SetupOtherInputs(Compaction* c);
+  void SetupOtherInputs(Compaction* c);                                         //xsx// 为Compaction对象c设置关联的输入文件
 
   // Save current contents to *log
   Status WriteSnapshot(log::Writer* log);

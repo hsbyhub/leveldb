@@ -215,7 +215,7 @@ Status Table::InternalGet(const ReadOptions& options, const Slice& k, void* arg,
                           void (*handle_result)(void*, const Slice&,
                                                 const Slice&)) {
   Status s;
-  Iterator* iiter = rep_->index_block->NewIterator(rep_->options.comparator);
+  Iterator* iiter = rep_->index_block->NewIterator(rep_->options.comparator);   //xsx// 在索引块中获取数据块句柄(handle)
   iiter->Seek(k);
   if (iiter->Valid()) {
     Slice handle_value = iiter->value();                                        //xsx// 此时的iiter->Value()为handle的encoding首地址
@@ -225,7 +225,7 @@ Status Table::InternalGet(const ReadOptions& options, const Slice& k, void* arg,
         !filter->KeyMayMatch(handle.offset(), k)) {
       // Not found
     } else {
-      Iterator* block_iter = BlockReader(this, options, iiter->value());        //xsx// 读取DataBlock, 获取数据块的迭代器
+      Iterator* block_iter = BlockReader(this, options, iiter->value());        //xsx// 读取DataBlock, 获取数据块的迭代器，并查找key
       block_iter->Seek(k);
       if (block_iter->Valid()) {                                                //xsx// 如果找到key大于等于key，调用回调处理该结果，对于VersionSet::Get(), 调用的是SaveValue()，而arg是*State::Saver
         (*handle_result)(arg, block_iter->key(), block_iter->value());

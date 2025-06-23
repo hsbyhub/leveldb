@@ -84,7 +84,7 @@ Version::~Version() {
   }
 }
 
-int FindFile(const InternalKeyComparator& icmp,                                 //xsx// 利用二分法在有序的文件列表中查找key所在文件的索引,如果查找不到则返回大于files.size()
+int FindFile(const InternalKeyComparator& icmp,                                 //xsx// 利用二分法在有序的文件列表中查找key所在文件的索引,如果查找不到则返回 int >= files.size()
              const std::vector<FileMetaData*>& files, const Slice& key) {
   uint32_t left = 0;
   uint32_t right = files.size();
@@ -338,7 +338,7 @@ Status Version::Get(const ReadOptions& options, const LookupKey& k,
     Status s;
     bool found;
 
-    static bool Match(void* arg, int level, FileMetaData* f) {
+    static bool Match(void* arg, int level, FileMetaData* f) {                  //xsx// 匹配到文件(范围在目标key之内)时的回调函数
       State* state = reinterpret_cast<State*>(arg);
 
       if (state->stats->seek_file == nullptr &&
@@ -1387,19 +1387,19 @@ void VersionSet::SetupOtherInputs(Compaction* c) {
   const int level = c->level();
   InternalKey smallest, largest;
 
-  AddBoundaryInputs(icmp_, current_->files_[level], &c->inputs_[0]);
-  GetRange(c->inputs_[0], &smallest, &largest);
+  AddBoundaryInputs(icmp_, current_->files_[level], &c->inputs_[0]);            //xsx// 获取通过inputs列表的文件范围，并将其范围内的level层级的文件添加到inputs[0]中
+  GetRange(c->inputs_[0], &smallest, &largest);                                 //xsx// 获取此时inputs[0]的范围
 
   current_->GetOverlappingInputs(level + 1, &smallest, &largest,
                                  &c->inputs_[1]);                               //xsx// 获取level+1的在level范围内有重叠的文件
 
   // Get entire range covered by compaction
   InternalKey all_start, all_limit;
-  GetRange2(c->inputs_[0], c->inputs_[1], &all_start, &all_limit);              //xsx// 获取level、level+1这2层所有文件的范围
+  GetRange2(c->inputs_[0], c->inputs_[1], &all_start, &all_limit);              //xsx// 获取level、level+1这2层所有文件的范围；至此，已经获取了level、level+1这2个层级中所有与inputs重叠的文件
 
   // See if we can grow the number of inputs in "level" without
   // changing the number of "level+1" files we pick up.
-  if (!c->inputs_[1].empty()) {
+  if (!c->inputs_[1].empty()) {                                                 //xsx// 优化，尝试在不影响level+1文件数量的情况下，获取更多的level层级文件
     std::vector<FileMetaData*> expanded0;
     current_->GetOverlappingInputs(level, &all_start, &all_limit, &expanded0);
     AddBoundaryInputs(icmp_, current_->files_[level], &expanded0);
